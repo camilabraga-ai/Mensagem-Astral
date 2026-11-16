@@ -69,10 +69,21 @@ def test_detecta_id_duplicado_e_texto_duplicado(kb):
     assert any("parecidos" in w for w in validate_kb(docs, fontes(kb)).warnings)
 
 
-def test_politica_rag_exclui_rascunhos(kb):
-    assert kb.usable() == []             # tudo é rascunho/não autorizado
-    assert len(kb.usable(dev_mode=True)) == 12
-    assert kb.rag_records() == []
+def test_politica_rag_producao_sem_dev_mode(kb):
+    assert len(kb.usable()) == 12          # lote aprovado e fonte autorizada
+    assert len(kb.rag_records()) == 12
+    assert all(d["revisao"]["status"] == "aprovado" for d in kb.usable())
+    assert all(d["originalidade"] == "gerado_por_ia" for d in kb.docs)
+
+
+def test_politica_rag_exclui_rascunho_e_fonte_nao_autorizada(kb):
+    docs = copy.deepcopy(kb.docs)
+    docs[0]["revisao"] = {"status": "rascunho", "revisor": None, "data": None}
+    assert len(KnowledgeBase(docs, fontes(kb)).usable()) == 11
+    assert len(KnowledgeBase(docs, fontes(kb)).usable(dev_mode=True)) == 12
+    fs = copy.deepcopy(fontes(kb))
+    fs[0]["autorizado"] = False
+    assert KnowledgeBase(kb.docs, fs).usable() == []
 
 
 def test_lookup_por_entidade(kb):
@@ -108,3 +119,7 @@ def test_qa_valido_e_vazamento(kb):
     leak = validate_qa([_qa("1", "signo.aries", "train"), _qa("2", "signo.aries", "test")], kb.docs)
     assert any("vazamento" in e for e in leak.errors)
     assert not validate_qa([_qa("3", "signo.aries", "train", doc="signo.nada")], kb.docs).ok
+
+
+def test_lookup_producao(kb):
+    assert [d["id"] for d in kb.lookup(signo="Áries")] == ["signo.aries"]
