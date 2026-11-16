@@ -28,3 +28,6 @@ birth_data*.json
 *.ckpt
 checkpoints/
 outputs/
+
+# Dados de referência pessoais (conferência local)
+tests/reference_local.json

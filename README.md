@@ -12,7 +12,7 @@ base de conhecimento (RAG) + LLM, com avaliação de fine-tuning LoRA como etapa
 
 ## Status
 - [x] Etapa 1 – Configuração
-- [ ] Etapa 2 – Motor astrológico
+- [x] Etapa 2 – Motor astrológico
 - [ ] Etapa 3 – Base de conhecimento
 - [ ] Etapa 4 – MVP com RAG
 - [ ] Etapa 5 – Fine-tuning (LoRA)

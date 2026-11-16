@@ -55,3 +55,20 @@ def test_signo_coerente_com_longitude():
 def test_salvar_json(tmp_path):
     out = save_chart_json(chart(1991, 3, 15, 2, 10), tmp_path / "x" / "mapa.json")
     assert json.loads(out.read_text(encoding="utf-8"))["resumo"]["signo_solar"]
+
+
+def test_mapa_de_referencia_local():
+    """Compara com mapa conferido em fonte externa. O arquivo é local (gitignored, dado pessoal)."""
+    from pathlib import Path
+    ref_file = Path(__file__).parent / "reference_local.json"
+    if not ref_file.exists():
+        pytest.skip("reference_local.json ausente (dado pessoal, não versionado)")
+    ref = json.loads(ref_file.read_text(encoding="utf-8"))
+    c = calculate_chart(BirthData(**ref["birth"]))
+    pontos = {p["nome"]: p for p in c["planetas"] + c["angulos"]}
+    for nome, (signo, grau, retro) in ref["pontos"].items():
+        p = pontos[nome]
+        assert p["signo"] == signo, nome
+        assert int(p["grau_no_signo"]) == grau, nome   # a fonte exibe o grau truncado
+        if nome not in ("Ascendente", "Meio do Céu"):
+            assert p["retrogrado"] == retro, nome
