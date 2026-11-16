@@ -39,15 +39,45 @@ def test_campos_antigos_sao_rejeitados(kb):
     assert not mutate(kb, fonte_id="x.y").ok
 
 
-def test_base_tem_22_documentos(kb):
-    assert len(kb.docs) == 22
-    assert len({d["entidades"]["signo"] for d in kb.docs if d["tipo"] == "signo"}) == 12
-    assert len({d["entidades"]["planeta"] for d in kb.docs if d["tipo"] == "planeta"}) == 10
+def test_base_tem_224_documentos(kb):
+    from collections import Counter
+    assert len(kb.docs) == 224
+    assert Counter(d["tipo"] for d in kb.docs) == {
+        "signo": 12, "planeta": 10, "casa": 12, "aspecto": 5, "elemento": 5,
+        "planeta_signo": 120, "elemento_signo": 60}
+
+
+def test_cobertura_completa_sem_buracos(kb):
+    from src.data.kb import SIGN_PT_TO_EN
+    signos = set(SIGN_PT_TO_EN.values())
+    ids = {d["id"] for d in kb.docs}
+    planetas = {d["entidades"]["planeta"] for d in kb.docs if d["tipo"] == "planeta"}
+    elementos = {d["entidades"]["elemento"] for d in kb.docs if d["tipo"] == "elemento"}
+    assert {f"signo.{s}" for s in signos} <= ids
+    assert {f"planeta_signo.{p}.{s}" for p in planetas for s in signos} <= ids       # 10 x 12
+    assert {f"elemento_signo.{e}.{s}" for e in elementos for s in signos} <= ids     # 5 x 12
+    assert {f"casa.{n}" for n in range(1, 13)} <= ids
 
 
 def test_planetas_cobrem_os_ids_do_motor_astrologico(kb):
     from src.astrology.chart import PLANETS
     assert {d["entidades"]["planeta"] for d in kb.docs if d["tipo"] == "planeta"} == set(PLANETS)
+
+
+def test_integracao_com_mapa_do_motor_astrologico(kb):
+    """Cada ponto de um mapa real do motor encontra exatamente um documento correspondente."""
+    from src.astrology.chart import BirthData, calculate_chart
+    c = calculate_chart(BirthData(2000, 1, 1, 12, 0, city="Greenwich", nation="GB",
+                                  lat=51.4769, lng=0.0, tz_str="UTC"))
+    for p in c["planetas"]:
+        assert len(kb.lookup(planeta=p["id"])) == 1, p["id"]
+        assert len(kb.lookup(planeta=p["id"], signo=p["signo"])) == 1, p["nome"]   # signo em português
+        assert len(kb.lookup(casa=p["casa"])) == 1
+    asc, mc = c["angulos"]
+    assert len(kb.lookup(elemento=asc["id"], signo=asc["signo"])) == 1
+    assert len(kb.lookup(elemento=mc["id"], signo=mc["signo"])) == 1                # medium_coeli -> midheaven
+    for a in c["aspectos"]:
+        assert len(kb.lookup(aspecto=a["aspecto"])) == 1, a["aspecto"]              # aspecto em português
 
 
 def test_textos_preservados(kb):
@@ -71,7 +101,21 @@ def test_detecta_signo_invalido_e_campo_extra(kb):
 
 
 def test_id_deve_seguir_entidade(kb):
-    assert any("ID deveria ser" in e for e in mutate(kb, id="signo.touro").errors)
+    assert any("ID deveria ser" in e for e in mutate(kb, id="signo.taurus").errors)
+
+
+def test_vocabulario_em_ingles_e_portugues_rejeitado(kb):
+    assert not mutate(kb, entidades={"signo": "Áries"}).ok          # a base usa inglês
+    assert not mutate(kb, entidades={"signo": "aries", "elemento": "sun"}).ok
+
+
+def test_alerta_de_similaridade_continua_ativo(kb):
+    docs = copy.deepcopy(kb.docs)
+    docs[1]["texto"] = docs[0]["texto"]
+    docs[1]["hash_texto"], docs[1]["n_palavras"] = docs[0]["hash_texto"], docs[0]["n_palavras"]
+    r = validate_kb(docs)
+    assert any("muito parecidos" in w for w in r.warnings)
+    assert r.ok                                                       # é alerta, não erro
 
 
 def test_detecta_id_duplicado_e_texto_duplicado(kb):
@@ -83,26 +127,28 @@ def test_detecta_id_duplicado_e_texto_duplicado(kb):
     assert any("parecidos" in w for w in validate_kb(docs).warnings)
 
 
-def test_indexacao_direta_dos_22(kb):
+def test_indexacao_direta_dos_224(kb):
     recs = kb.rag_records()
-    assert len(recs) == 22
+    assert len(recs) == 224
+    assert len({r["id"] for r in recs}) == 224
     assert recs[0]["texto_indexavel"].startswith(kb.docs[0]["titulo"])
     assert set(recs[0]["metadados"]) == {"tipo", "entidades", "abordagem", "tags", "hash_texto"}
 
 
 def test_lookup_planeta(kb):
     assert [d["id"] for d in kb.lookup(planeta="moon")] == ["planeta.moon"]
-    assert kb.lookup(planeta="moon", signo="Gêmeos") == []   # combinação ainda não existe
+    assert [d["id"] for d in kb.lookup(planeta="moon", signo="Gêmeos")] == ["planeta_signo.moon.gemini"]
+    assert [d["id"] for d in kb.lookup(planeta="moon", signo="gemini")] == ["planeta_signo.moon.gemini"]
 
 
 def test_lookup_por_entidade(kb):
-    assert [d["id"] for d in kb.lookup(signo="Gêmeos")] == ["signo.gemeos"]
+    assert [d["id"] for d in kb.lookup(signo="Gêmeos")] == ["signo.gemini"]
     assert kb.lookup(signo="Gêmeos", casa=3) == []
 
 
 def test_for_chart_usa_resumo_do_mapa(kb):
     chart = {"resumo": {"signo_solar": "Áries", "signo_lunar": "Gêmeos", "ascendente": "Aquário"}}
-    assert kb.for_chart(chart)["signo_lunar"][0]["id"] == "signo.gemeos"
+    assert kb.for_chart(chart)["signo_lunar"][0]["id"] == "signo.gemini"
 
 
 def test_hash_ignora_espacos():

@@ -34,7 +34,9 @@
         "elemento",
         "modalidade",
         "combinacao",
-        "conceito"
+        "conceito",
+        "planeta_signo",
+        "elemento_signo"
       ]
     },
     "entidades": {
@@ -76,18 +78,18 @@
         },
         "signo": {
           "enum": [
-            "Áries",
-            "Touro",
-            "Gêmeos",
-            "Câncer",
-            "Leão",
-            "Virgem",
-            "Libra",
-            "Escorpião",
-            "Sagitário",
-            "Capricórnio",
-            "Aquário",
-            "Peixes"
+            "aries",
+            "taurus",
+            "gemini",
+            "cancer",
+            "leo",
+            "virgo",
+            "libra",
+            "scorpio",
+            "sagittarius",
+            "capricorn",
+            "aquarius",
+            "pisces"
           ]
         },
         "casa": {
@@ -97,11 +99,20 @@
         },
         "aspecto": {
           "enum": [
-            "conjunção",
-            "oposição",
-            "trígono",
-            "quadratura",
-            "sextil"
+            "conjunction",
+            "sextile",
+            "square",
+            "trine",
+            "opposition"
+          ]
+        },
+        "elemento": {
+          "enum": [
+            "ascendant",
+            "midheaven",
+            "north_node",
+            "south_node",
+            "chiron"
           ]
         }
       }
