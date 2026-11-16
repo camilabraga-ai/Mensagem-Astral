@@ -1,0 +1,2 @@
+# Etapa 3 -- base de conhecimento
+jsonschema>=4.20

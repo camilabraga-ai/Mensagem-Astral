@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mensagem-astral/documento.schema.json",
+  "title": "Documento da base de conhecimento (RAG) v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "tipo", "entidades", "titulo", "texto", "abordagem", "tags",
+               "fonte_id", "localizacao_fonte", "originalidade", "revisao", "split_grupo", "hash_texto", "n_palavras"],
+  "properties": {
+    "schema_version": {"const": "1.1"},
+    "id": {"type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"},
+    "tipo": {"enum": ["signo", "planeta", "casa", "aspecto", "elemento", "modalidade", "combinacao", "conceito"]},
+    "entidades": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "planeta": {"enum": ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto", "ascendant", "medium_coeli"]},
+        "planeta_2": {"enum": ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto", "ascendant", "medium_coeli"]},
+        "signo": {"enum": ["Áries", "Touro", "Gêmeos", "Câncer", "Leão", "Virgem", "Libra", "Escorpião", "Sagitário", "Capricórnio", "Aquário", "Peixes"]},
+        "casa": {"type": "integer", "minimum": 1, "maximum": 12},
+        "aspecto": {"enum": ["conjunção", "oposição", "trígono", "quadratura", "sextil"]}
+      }
+    },
+    "titulo": {"type": "string", "minLength": 3, "maxLength": 120},
+    "texto": {"type": "string", "minLength": 200},
+    "abordagem": {"enum": ["psicologica", "tradicional", "evolutiva", "outra"]},
+    "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9_]+$"}},
+    "fonte_id": {"type": "string"},
+    "localizacao_fonte": {"type": ["string", "null"]},
+    "originalidade": {"enum": ["autoral", "parafrase", "dominio_publico", "licenciado", "gerado_por_ia"]},
+    "revisao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "revisor", "data"],
+      "properties": {
+        "status": {"enum": ["rascunho", "revisado", "aprovado"]},
+        "revisor": {"type": ["string", "null"]},
+        "data": {"type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}
+      }
+    },
+    "split_grupo": {"type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"},
+    "hash_texto": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "n_palavras": {"type": "integer", "minimum": 1}
+  }
+}
