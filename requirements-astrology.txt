@@ -1,0 +1,4 @@
+# Etapa 2 -- motor astrológico
+kerykeion>=6.1,<7
+geopy>=2.4
+timezonefinder>=6.5

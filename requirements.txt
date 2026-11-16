@@ -4,8 +4,8 @@ pandas>=2.0
 numpy>=1.26
 pytest>=8.0
 
+# Etapa 2: ver requirements-astrology.txt (instalado no notebook 02)
 # Instalar somente quando a etapa correspondente começar:
-# Etapa 2: kerykeion
 # Etapa 3/4: sentence-transformers  (+ faiss-cpu ou chromadb, a decidir)
 # Etapa 4: transformers accelerate bitsandbytes gradio
 # Etapa 5: peft trl datasets
