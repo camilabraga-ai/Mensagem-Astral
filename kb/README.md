@@ -17,3 +17,5 @@ dos pares de fine-tuning. Formal: `src/data/schemas/documento.schema.json`.
 
 Uso: `KnowledgeBase.load("kb").lookup(signo="Áries")` e `.rag_records()` (`src/data/kb.py`).
 Validação: `python -m pytest tests/test_kb.py`.
+
+Origem e revisão dos textos: ver [`ORIGEM.md`](ORIGEM.md).
