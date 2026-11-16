@@ -1,8 +1,8 @@
 """Base de conhecimento astrológico: carregamento, validação, consulta e preparo para RAG.
 
-Formato: JSONL (ver src/data/schemas/*.schema.json, schema v1.1). Duas camadas de checagem:
+Formato: JSONL (ver src/data/schemas/*.schema.json, schema v2.0). Duas camadas de checagem:
   1. JSON Schema (estrutura, tipos, vocabulário);
-  2. regras semânticas (IDs únicos, fontes, hash, contagem, coerência entidade/ID, duplicatas, política de uso).
+  2. regras técnicas (IDs únicos, hash, contagem, coerência entidade/ID, duplicatas).
 """
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 SCHEMA_DIR = Path(__file__).parent / "schemas"
-STATUS_RAG = {"revisado", "aprovado"}
 REQUIRED_ENTITY = {"signo": {"signo"}, "planeta": {"planeta"}, "casa": {"casa"}, "aspecto": {"aspecto"}}
 WORDS_MIN, WORDS_MAX = 80, 300
 
@@ -64,16 +63,9 @@ class Report:
         return not self.errors
 
 
-def validate_kb(docs: list[dict], fontes: list[dict]) -> Report:
+def validate_kb(docs: list[dict]) -> Report:
     r = Report()
-    dv, fv = _schema("documento"), _schema("fonte")
-    for f in fontes:
-        for e in fv.iter_errors(f):
-            r.errors.append(f"fonte {f.get('id')}: {e.message}")
-    fmap = {f["id"]: f for f in fontes if "id" in f}
-    if len(fmap) != len(fontes):
-        r.errors.append("fontes: IDs duplicados")
-
+    dv = _schema("documento")
     seen: dict[str, dict] = {}
     for d in docs:
         i = d.get("id", "?")
@@ -85,9 +77,6 @@ def validate_kb(docs: list[dict], fontes: list[dict]) -> Report:
         if i in seen:
             r.errors.append(f"{i}: ID duplicado")
         seen[i] = d
-        f = fmap.get(d["fonte_id"])
-        if f is None:
-            r.errors.append(f"{i}: fonte inexistente ({d['fonte_id']})")
         if d["hash_texto"] != text_hash(d["texto"]):
             r.errors.append(f"{i}: hash_texto não confere")
         n = len(d["texto"].split())
@@ -99,20 +88,11 @@ def validate_kb(docs: list[dict], fontes: list[dict]) -> Report:
         if need and not need <= d["entidades"].keys():
             r.errors.append(f"{i}: tipo '{d['tipo']}' exige entidades {sorted(need)}")
         if d["tipo"] in ("signo", "planeta"):
-            key = "signo" if d["tipo"] == "signo" else "planeta"
-            expected = f"{d['tipo']}.{slug(str(d['entidades'].get(key, '')))}"
+            expected = f"{d['tipo']}.{slug(str(d['entidades'].get(d['tipo'], '')))}"
             if d["id"] != expected:
                 r.errors.append(f"{i}: ID deveria ser '{expected}'")
         if d["split_grupo"] != d["id"] and d["tipo"] in ("signo", "planeta", "casa", "aspecto"):
             r.warnings.append(f"{i}: split_grupo difere do id")
-        rev = d["revisao"]
-        if rev["status"] in STATUS_RAG and not (rev["revisor"] and rev["data"]):
-            r.errors.append(f"{i}: status '{rev['status']}' exige revisor e data")
-        if f is not None:
-            if rev["status"] == "aprovado" and not f["autorizado"]:
-                r.errors.append(f"{i}: aprovado, mas a fonte {f['id']} não está autorizada")
-            if (d["originalidade"] == "gerado_por_ia") != (f["licenca"] == "gerada_por_ia"):
-                r.errors.append(f"{i}: originalidade e licença da fonte inconsistentes")
 
     sh = {i: _shingles(d["texto"]) for i, d in seen.items()}
     ids = list(sh)
@@ -151,49 +131,27 @@ def validate_qa(qas: list[dict], docs: list[dict]) -> Report:
 class KnowledgeBase:
     """Consulta determinística por entidades do mapa + preparo de documentos para embeddings."""
 
-    def __init__(self, docs: list[dict], fontes: list[dict]):
+    def __init__(self, docs: list[dict]):
         self.docs = docs
-        self.fontes = {f["id"]: f for f in fontes}
 
     @classmethod
     def load(cls, kb_dir: str | Path) -> "KnowledgeBase":
-        kb_dir = Path(kb_dir)
-        return cls(read_jsonl(kb_dir / "documentos.jsonl"), read_jsonl(kb_dir / "fontes.jsonl"))
+        return cls(read_jsonl(Path(kb_dir) / "documentos.jsonl"))
 
-    def usable(self, dev_mode: bool = False) -> list[dict]:
-        """Política de uso: só indexa revisado/aprovado e fonte autorizada. dev_mode inclui rascunhos."""
-        out = []
-        for d in self.docs:
-            ok_status = dev_mode or d["revisao"]["status"] in STATUS_RAG
-            ok_source = dev_mode or self.fontes[d["fonte_id"]]["autorizado"]
-            if ok_status and ok_source:
-                out.append(d)
-        return out
-
-    def lookup(self, dev_mode: bool = False, **entidades) -> list[dict]:
+    def lookup(self, **entidades) -> list[dict]:
         """Ex.: kb.lookup(signo="Áries"). Casa exatamente as entidades pedidas."""
-        return [d for d in self.usable(dev_mode) if all(d["entidades"].get(k) == v for k, v in entidades.items())
-                and set(d["entidades"]) == set(entidades)]
+        return [d for d in self.docs if set(d["entidades"]) == set(entidades)
+                and all(d["entidades"][k] == v for k, v in entidades.items())]
 
-    def for_chart(self, chart: dict, dev_mode: bool = False) -> dict[str, list[dict]]:
+    def for_chart(self, chart: dict) -> dict[str, list[dict]]:
         """Documentos de signo para Sol, Lua e Ascendente de um mapa gerado por src.astrology.chart."""
-        out = {}
-        for rotulo, signo in chart["resumo"].items():
-            out[rotulo] = self.lookup(dev_mode=dev_mode, signo=signo)
-        return out
+        return {rotulo: self.lookup(signo=signo) for rotulo, signo in chart["resumo"].items()}
 
-    def rag_records(self, dev_mode: bool = False) -> list[dict]:
-        """Registros prontos para embedding: texto indexável + metadados para filtro/citação."""
-        recs = []
-        for d in self.usable(dev_mode):
-            f = self.fontes[d["fonte_id"]]
-            recs.append({
-                "id": d["id"],
-                "texto_indexavel": f"{d['titulo']}. {normalize_text(d['texto'])}",
-                "metadados": {
-                    "tipo": d["tipo"], "entidades": d["entidades"], "abordagem": d["abordagem"],
-                    "tags": d["tags"], "fonte_id": d["fonte_id"], "fonte_titulo": f["titulo"],
-                    "revisao": d["revisao"]["status"], "hash_texto": d["hash_texto"],
-                },
-            })
-        return recs
+    def rag_records(self) -> list[dict]:
+        """Registros prontos para embedding: texto indexável + metadados para filtro."""
+        return [{
+            "id": d["id"],
+            "texto_indexavel": f"{d['titulo']}. {normalize_text(d['texto'])}",
+            "metadados": {"tipo": d["tipo"], "entidades": d["entidades"], "abordagem": d["abordagem"],
+                          "tags": d["tags"], "hash_texto": d["hash_texto"]},
+        } for d in self.docs]

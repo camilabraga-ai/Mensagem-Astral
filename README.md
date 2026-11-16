@@ -13,7 +13,7 @@ base de conhecimento (RAG) + LLM, com avaliação de fine-tuning LoRA como etapa
 ## Status
 - [x] Etapa 1 – Configuração
 - [x] Etapa 2 – Motor astrológico
-- [~] Etapa 3 – Base de conhecimento (schema, validador e lote piloto de 12 signos aprovados; faltam planetas, casas e aspectos)
+- [~] Etapa 3 – Base de conhecimento (schema v2.0, validador e 12 signos; faltam planetas, casas e aspectos)
 - [ ] Etapa 4 – MVP com RAG
 - [ ] Etapa 5 – Fine-tuning (LoRA)
 - [ ] Etapa 6 – Avaliação e documentação
