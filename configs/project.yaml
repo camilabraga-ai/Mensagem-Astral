@@ -1,0 +1,9 @@
+project_name: Mensagem-Astral
+# Pasta raiz no Google Drive (My Drive/<drive_root>)
+drive_root: MensagemAstral
+drive_subdirs:
+  - books        # livros/documentos autorizados (NUNCA vão ao GitHub)
+  - datasets     # datasets processados
+  - checkpoints  # checkpoints de treino
+  - adapters     # adaptadores LoRA finais
+  - outputs      # resultados, logs, mapas gerados

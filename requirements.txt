@@ -1,0 +1,12 @@
+# Etapa 1 (base) -- instalado no notebook 01
+pyyaml>=6.0
+pandas>=2.0
+numpy>=1.26
+pytest>=8.0
+
+# Instalar somente quando a etapa correspondente começar:
+# Etapa 2: kerykeion
+# Etapa 3/4: sentence-transformers  (+ faiss-cpu ou chromadb, a decidir)
+# Etapa 4: transformers accelerate bitsandbytes gradio
+# Etapa 5: peft trl datasets
+# Etapa 6: scikit-learn

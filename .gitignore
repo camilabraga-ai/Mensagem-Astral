@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# Segredos
+.env
+*.key
+secrets*
+
+# Dados (ficam no Google Drive, nunca no GitHub)
+data/*
+!data/README.md
+*.pdf
+*.epub
+*.parquet
+*.jsonl
+birth_data*.json
+
+# Modelos e artefatos de treino
+*.bin
+*.safetensors
+*.gguf
+*.pt
+*.ckpt
+checkpoints/
+outputs/
