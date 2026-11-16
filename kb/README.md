@@ -15,6 +15,8 @@ dos pares de fine-tuning. Formal: `src/data/schemas/documento.schema.json`.
 | `split_grupo` | grupo para dividir treino/validação/teste sem vazamento |
 | `hash_texto`, `n_palavras` | integridade (SHA-256 do texto normalizado; contagem) |
 
+Conteúdo atual: 12 signos (`signo.*`) e 10 planetas/luminares (`planeta.sun` … `planeta.pluto`, ids iguais aos do mapa), 22 documentos.
+
 Uso: `KnowledgeBase.load("kb").lookup(signo="Áries")` e `.rag_records()` (`src/data/kb.py`).
 Validação: `python -m pytest tests/test_kb.py`.
 

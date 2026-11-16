@@ -39,8 +39,15 @@ def test_campos_antigos_sao_rejeitados(kb):
     assert not mutate(kb, fonte_id="x.y").ok
 
 
-def test_cobre_os_12_signos(kb):
-    assert len({d["entidades"]["signo"] for d in kb.docs}) == 12
+def test_base_tem_22_documentos(kb):
+    assert len(kb.docs) == 22
+    assert len({d["entidades"]["signo"] for d in kb.docs if d["tipo"] == "signo"}) == 12
+    assert len({d["entidades"]["planeta"] for d in kb.docs if d["tipo"] == "planeta"}) == 10
+
+
+def test_planetas_cobrem_os_ids_do_motor_astrologico(kb):
+    from src.astrology.chart import PLANETS
+    assert {d["entidades"]["planeta"] for d in kb.docs if d["tipo"] == "planeta"} == set(PLANETS)
 
 
 def test_textos_preservados(kb):
@@ -76,11 +83,16 @@ def test_detecta_id_duplicado_e_texto_duplicado(kb):
     assert any("parecidos" in w for w in validate_kb(docs).warnings)
 
 
-def test_indexacao_direta_dos_12(kb):
+def test_indexacao_direta_dos_22(kb):
     recs = kb.rag_records()
-    assert len(recs) == 12
+    assert len(recs) == 22
     assert recs[0]["texto_indexavel"].startswith(kb.docs[0]["titulo"])
     assert set(recs[0]["metadados"]) == {"tipo", "entidades", "abordagem", "tags", "hash_texto"}
+
+
+def test_lookup_planeta(kb):
+    assert [d["id"] for d in kb.lookup(planeta="moon")] == ["planeta.moon"]
+    assert kb.lookup(planeta="moon", signo="Gêmeos") == []   # combinação ainda não existe
 
 
 def test_lookup_por_entidade(kb):
