@@ -90,10 +90,10 @@ def retrieve(kb: KnowledgeBase, chart: dict, keys=DEFAULT_POINTS) -> RetrievedCo
     for p in ctx.placements:
         if p.key == "ascendant":
             add(f"{p.label} em {p.sign_pt}", elemento="ascendant", signo=p.sign)
-            add(f"o que o {p.label} representa", elemento="ascendant")
+            add(f"significado geral de {p.label}", elemento="ascendant")
         else:
             add(f"{p.label} em {p.sign_pt}", planeta=p.key, signo=p.sign)
-            add(f"o que o {p.label} representa", planeta=p.key)
+            add(f"significado geral de {p.label}", planeta=p.key)
             add(f"{p.label} na casa {p.house}", casa=p.house)
     for sign in dict.fromkeys(p.sign for p in ctx.placements):   # ordem estável, sem repetir
         add(f"signo de {next(p.sign_pt for p in ctx.placements if p.sign == sign)}", signo=sign)

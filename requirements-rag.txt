@@ -1,0 +1,2 @@
+# Etapa 4 -- RAG (geração via API da Anthropic)
+anthropic>=1.0
