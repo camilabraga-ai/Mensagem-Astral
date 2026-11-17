@@ -1,7 +1,7 @@
 # Etapa 5 — Trânsitos e mensagem diária (progresso)
 
 Objetivo: mensagem diária personalizada relacionando os trânsitos do dia ao mapa natal.
-Status geral: **em andamento** (não marcar como concluída sem confirmação da usuária).
+Status geral: **concluída** (confirmada pela usuária em 2026-11-16).
 
 ## Arquitetura
 ```
@@ -24,6 +24,20 @@ mapa natal + data -> transit_positions (Kerykeion, meio-dia local) -> find_aspec
 
 Chamadas pagas: nenhuma feita nesta etapa até agora; todas desligadas por padrão.
 
-## Pendente (depende da usuária)
-- Rodar o notebook 05 no Colab e gerar mensagens reais (flag `CONFIRMO_CHAMADA_PAGA_DIARIA`); avaliar qualidade, tamanho e fidelidade.
-- Confirmação para marcar a Etapa 5 como concluída.
+## Conclusão (2026-11-16)
+- Pipeline completo validado com a API real (Claude Haiku 5.5): trânsitos, seleção, RAG, mensagem, cache e checagem de fidelidade.
+- Cache confirmado no Colab: a segunda consulta do mesmo dia fez 0 chamadas à API.
+- Testes: 264 no Mac (61 dos módulos de trânsitos também passaram no Colab).
+- Formato e tom editorial **aprovados** e mantidos como padrão do projeto (`PROMPT_VERSION = "daily-3"`):
+  70 a 100 palavras, até 2 parágrafos, tom natural, contemporâneo e conversacional, sem metáforas nem poesia,
+  astrologia como base sem jargão técnico, uma observação e uma sugestão prática, sem autoajuda e
+  **sem aviso de leitura simbólica no corpo da mensagem** (o aviso fica nos Termos de Uso e no onboarding).
+- Custo observado: ~4,6 mil tokens de entrada e ~1,7 mil de saída por mensagem (≈ US$ 0,0013).
+- Qualquer mudança no prompt exige alterar `PROMPT_VERSION`, o que invalida o cache.
+
+## Fora do escopo desta etapa (candidatos para o futuro)
+- Trânsitos para outros pontos natais além de Sol, Lua e Ascendente.
+- Textos de trânsito e de casas em trânsito na base.
+- Distinção entre aspecto aplicando e separando.
+- Desligar o raciocínio interno do modelo para reduzir custo (exige teste de qualidade).
+- Fine-tuning (adiado) e Etapa 6 (avaliação e documentação final).

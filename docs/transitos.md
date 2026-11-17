@@ -1,4 +1,4 @@
-# Trânsitos e mensagem diária (Etapa 5)
+# Trânsitos e mensagem diária (Etapa 5 — concluída)
 
 ```
 mapa natal + data -> transit_positions (Kerykeion) -> find_aspects -> select_transits
