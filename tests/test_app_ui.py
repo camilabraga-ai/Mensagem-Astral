@@ -143,60 +143,96 @@ def test_varias_cidades_pedem_confirmacao(ambiente, monkeypatch):
 
 
 # ------------------------------------------------------------------ mensagem, cache e custo
-def test_nenhuma_chamada_paga_ao_carregar_a_pagina_de_resultado(ambiente):
-    at = ate_resultado(novo())
-    assert not at.exception and ambiente.calls == []
-    assert botao(at, "Gerar mensagem de hoje") and "ainda não foi gerada" in textos(at)
+def sem_botao(at, rotulo):
+    return not [b for b in at.button if b.label == rotulo]
 
 
-def test_clicar_em_gerar_mostra_a_mensagem_e_chama_a_api_uma_vez(ambiente):
+def test_botao_principal_gera_a_mensagem_real_na_segunda_tela(ambiente):
     at = ate_resultado(novo())
-    botao(at, "Gerar mensagem de hoje").click(); at.run()
-    assert not at.exception and len(ambiente.calls) == 1
-    assert MSG.split(". ")[0] in textos(at) and at.session_state["gen_count"] == 1
+    assert not at.exception and len(ambiente.calls) == 1 and at.session_state["gen_count"] == 1
+    assert [x.value for x in at.title] == ["Sua mensagem de hoje"]
+    assert MSG.split(". ")[0] in textos(at) and "ainda não foi gerada" not in textos(at)
+    assert sem_botao(at, "Gerar mensagem de hoje") and sem_botao(at, "Tentar novamente")
     assert "leitura simbólica" not in textos(at).lower() and "comprovação científica" not in textos(at)
 
 
-def test_mensagem_em_cache_aparece_sem_nova_chamada(ambiente):
-    at = ate_resultado(novo())
-    botao(at, "Gerar mensagem de hoje").click(); at.run()
+def test_nada_e_gerado_ao_abrir_a_tela_inicial_nem_ao_chegar_na_confirmacao(ambiente):
+    at = novo()
+    assert ambiente.calls == []
+    preencher_e_enviar(at, data=date(2019, 2, 16), hora=time(23, 30))        # horário ambíguo: pede confirmação
+    assert at.session_state["page"] == "confirm" and ambiente.calls == []
+    botao(at, "Ver minha mensagem de hoje").click(); at.run()
     assert len(ambiente.calls) == 1
-    outro = ate_resultado(novo())                   # nova sessão, mesmos dados e mesmo dia
-    assert MSG.split(". ")[0] in textos(outro) and len(ambiente.calls) == 1
-    assert not [b for b in outro.button if b.label == "Gerar mensagem de hoje"]
+
+
+def test_repetir_a_consulta_usa_o_cache_e_nao_chama_a_api(ambiente):
+    ate_resultado(novo())
+    assert len(ambiente.calls) == 1
+    segunda = ate_resultado(novo())                  # nova sessão: mesmos dados, mesmo dia
+    assert MSG.split(". ")[0] in textos(segunda) and len(ambiente.calls) == 1 and segunda.session_state["gen_count"] == 0
+
+
+def test_interagir_com_a_segunda_tela_nao_gera_de_novo(ambiente):
+    at = ate_resultado(novo())
+    at.run(); at.run()                                # reruns (cliques em expander, etc.)
+    assert len(ambiente.calls) == 1 and MSG.split(". ")[0] in textos(at)
+
+
+def test_dia_seguinte_gera_nova_mensagem(ambiente, monkeypatch):
+    ate_resultado(novo())
+    monkeypatch.setattr(service, "today_local", lambda: date(2026, 11, 18))
+    ate_resultado(novo())
+    assert len(ambiente.calls) == 2
+
+
+def test_pessoa_diferente_nao_reaproveita_a_mensagem_de_outra(ambiente):
+    ate_resultado(novo())
+    ate_resultado(novo(), data=date(1985, 6, 15), hora=time(8, 30))
+    assert len(ambiente.calls) == 2
 
 
 def test_nome_aparece_na_saudacao_e_nao_vai_para_o_llm(ambiente):
     at = ate_resultado(novo(), nome="Marina")
-    assert any("Olá, Marina" in m.value for m in at.markdown) and [x.value for x in at.title] == ["Sua mensagem de hoje"]
-    botao(at, "Gerar mensagem de hoje").click(); at.run()
+    assert any("Olá, Marina" in m.value for m in at.markdown)
     sistema, usuario = ambiente.calls[0]
     assert "Marina" not in sistema and "Marina" not in usuario and "1990" not in usuario
 
 
-def test_sem_chave_a_geracao_fica_desativada(ambiente, monkeypatch):
+def test_sem_chave_a_geracao_fica_desativada_e_nada_e_enviado(ambiente, monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY")
     at = ate_resultado(novo())
-    assert "desativada" in textos(at) and not [b for b in at.button if b.label == "Gerar mensagem de hoje"]
-    assert ambiente.calls == []
+    assert "desativada" in textos(at) and ambiente.calls == [] and not at.exception
+    assert sem_botao(at, "Gerar mensagem de hoje")
 
 
 def test_limite_de_geracoes_por_sessao(ambiente):
-    at = ate_resultado(novo())
+    at = novo()
     at.session_state["gen_count"] = service.MAX_GENERATIONS_PER_SESSION
-    at.run()
-    assert "limite" in textos(at) and not [b for b in at.button if b.label == "Gerar mensagem de hoje"]
+    ate_resultado(at)
+    assert "limite" in textos(at) and ambiente.calls == []
 
 
-def test_erro_da_api_vira_mensagem_clara_sem_vazar_chave(ambiente, monkeypatch):
+def test_erro_da_api_mostra_mensagem_clara_sem_vazar_chave_e_permite_tentar_de_novo(ambiente, monkeypatch):
     def quebra(key):
         raise type("AuthenticationError", (Exception,), {})("401 sk-teste-falsa")
     monkeypatch.setattr(service, "build_llm", quebra)
     at = ate_resultado(novo())
-    botao(at, "Gerar mensagem de hoje").click(); at.run()
     erros = " ".join(e.value for e in at.error)
     assert "chave de acesso" in erros and "sk-teste" not in erros and "401" not in erros
-    assert not at.exception and at.session_state["gen_count"] == 0
+    assert not at.exception and at.session_state["gen_count"] == 0 and ambiente.calls == []
+    assert "Não foi possível gerar a mensagem agora" in textos(at)
+    monkeypatch.setattr(service, "build_llm", lambda key: ambiente)           # a API voltou
+    botao(at, "Tentar novamente").click(); at.run()
+    assert len(ambiente.calls) == 1 and MSG.split(". ")[0] in textos(at) and sem_botao(at, "Tentar novamente")
+
+
+def test_erro_de_conexao_e_de_limite_tem_mensagens_proprias(ambiente, monkeypatch):
+    for nome, trecho in (("APIConnectionError", "conectar"), ("RateLimitError", "muitas solicitações")):
+        def quebra(key, n=nome):
+            raise type(n, (Exception,), {})("falha")
+        monkeypatch.setattr(service, "build_llm", quebra)
+        at = ate_resultado(novo())
+        assert trecho in " ".join(e.value for e in at.error)
 
 
 def test_seu_mapa_mostra_sol_lua_e_ascendente(ambiente):
@@ -208,14 +244,50 @@ def test_acesso_direto_ao_resultado_sem_dados_volta_ao_inicio(ambiente):
     at = AppTest.from_file(APP, default_timeout=60)
     at.session_state["page"] = "result"
     at.run()
-    assert not at.exception and botao(at, "Receber minha mensagem")
+    assert not at.exception and botao(at, "Receber minha mensagem") and ambiente.calls == []
 
 
 def test_chave_da_api_nunca_aparece_na_tela(ambiente):
     at = ate_resultado(novo())
-    botao(at, "Gerar mensagem de hoje").click(); at.run()
     tudo = textos(at) + " ".join(str(w.value) for w in at.text_input)
     assert "sk-teste-falsa" not in tudo
+
+
+# ------------------------------------------------------------------ navegação entre telas
+def test_voltar_da_confirmacao_preserva_os_dados_digitados(ambiente):
+    at = novo()
+    preencher_e_enviar(at, nome="Bia", data=date(2019, 2, 16), hora=time(23, 30), cidade="São Paulo")
+    assert at.session_state["page"] == "confirm"
+    botao(at, "Voltar").click(); at.run()
+    assert at.session_state["page"] == "form" and ambiente.calls == []
+    assert at.text_input[0].value == "Bia" and at.text_input[1].value == "São Paulo"
+    assert at.date_input[0].value == date(2019, 2, 16) and at.time_input[0].value == time(23, 30)
+
+
+def test_comecar_de_novo_limpa_tudo_e_volta_ao_formulario(ambiente):
+    at = ate_resultado(novo(), nome="Bia")
+    botao(at, "Começar de novo").click(); at.run()
+    assert at.session_state["page"] == "form" and "chart" not in at.session_state
+    assert at.text_input[0].value == "" and at.date_input[0].value is None
+
+
+def test_recarregar_a_pagina_volta_ao_formulario(ambiente):
+    ate_resultado(novo())
+    assert botao(novo(), "Receber minha mensagem")                        # nova sessão = formulário vazio
+
+
+def test_ida_e_volta_completa_sem_excecoes(ambiente):
+    at = ate_resultado(novo(), data=date(2019, 2, 16), hora=time(23, 30))
+    assert not at.exception and at.session_state["page"] == "result"
+    botao(at, "Começar de novo").click(); at.run()
+    ate_resultado(at)
+    assert not at.exception and at.session_state["page"] == "result"
+
+
+def test_horario_de_nascimento_no_futuro_e_recusado(ambiente, monkeypatch):
+    monkeypatch.setattr(service, "birth_in_future", lambda *a, **k: True)
+    at = novo(); preencher_e_enviar(at)
+    assert "ainda não aconteceu" in textos(at) and at.session_state["page"] == "form" and ambiente.calls == []
 
 
 def test_caso_comum_vai_direto_para_a_mensagem_sem_tela_de_confirmacao(ambiente):
@@ -228,7 +300,6 @@ def test_mensagem_e_escapada_antes_de_virar_html(ambiente, monkeypatch):
     perigosa = "Olá <script>alert(1)</script> e <img src=x onerror=alert(2)>"
     ambiente.text = perigosa
     at = ate_resultado(novo())
-    botao(at, "Gerar mensagem de hoje").click(); at.run()
     html = " ".join(m.value for m in at.markdown)
     assert "<script>" not in html and "&lt;script&gt;" in html and "<img" not in html
 

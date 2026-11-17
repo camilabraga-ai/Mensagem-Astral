@@ -14,7 +14,8 @@ from pathlib import Path
 
 def person_key(chart: dict) -> str:
     n = chart["nascimento"]
-    raw = json.dumps([n["horario_utc"], n["latitude"], n["longitude"]])
+    # coordenadas com 2 casas (~1 km): o serviço de cidades pode variar nas últimas casas e isso não deve gerar nova chamada
+    raw = json.dumps([n["horario_utc"], round(n["latitude"], 2), round(n["longitude"], 2)])
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 

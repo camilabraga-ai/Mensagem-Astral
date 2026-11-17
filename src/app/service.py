@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -48,11 +48,18 @@ def get_api_key(secrets=None) -> str | None:
 
 def build_llm(api_key: str) -> AnthropicLLM:
     import anthropic
-    return AnthropicLLM(model=DEFAULT_MODEL, client=anthropic.Anthropic(api_key=api_key))
+    # timeout curto: a tela nunca fica presa esperando a API (o SDK ainda tenta 2 vezes em falhas de rede)
+    return AnthropicLLM(model=DEFAULT_MODEL, client=anthropic.Anthropic(api_key=api_key, timeout=60.0, max_retries=2))
 
 
 def today_local() -> date:
     return datetime.now(ZoneInfo(DISPLAY_TZ)).date()
+
+
+def birth_in_future(place: Place, data: date, hora: time, now: datetime | None = None) -> bool:
+    """True se o instante de nascimento (no fuso do local) ainda não aconteceu."""
+    local = datetime.combine(data, hora.replace(second=0, microsecond=0)).replace(tzinfo=ZoneInfo(place.tz))
+    return local.astimezone(timezone.utc) > (now or datetime.now(timezone.utc))
 
 
 def load_kb() -> KnowledgeBase:

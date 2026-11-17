@@ -15,6 +15,12 @@ Status: **implementada e testada localmente; aguardando revisão e confirmação
 - Tela inicial = formulário; caso comum segue direto para a mensagem; modo de prévia (`MENSAGEM_ASTRAL_PREVIEW=result`).
 - Testes visuais em `tests/test_app_visual.py`; capturas de tela conferidas no Chrome (mobile 430 px e desktop 1280 px).
 
+## Parte funcional (2026-11-17)
+- Botão principal gera a mensagem real (Haiku) na segunda tela; "Tentar novamente" em caso de erro; cache em disco entre consultas e reinicializações.
+- Validação: data (1900 até hoje), horário, cidade/país, fuso pelo local, horário de verão (inexistente bloqueia, ambíguo pede escolha), nascimento no futuro, datas históricas e fusos fracionados.
+- Busca de cidades: filtra localidades e mostra "Cidade, Estado, País".
+- Verificado no Chrome com o app real e LLM simulado: 0 chamadas ao abrir; 1 chamada ao enviar; 0 na repetição.
+
 ## Preservado
 Motor astrológico, RAG, trânsitos, prompt editorial aprovado (`daily-3`) e os 224 textos: nenhum foi alterado.
 

@@ -47,8 +47,11 @@ def daily_message(kb: KnowledgeBase, chart: dict, day: date, llm: LLM, cache: Da
     warnings = check_faithfulness(text, ctx.for_faithfulness())
     usage = getattr(llm, "last_usage", None)
     if cache:
-        cache.set(person, day, {
-            "date": day.isoformat(), "model": model, "prompt_version": prompt_mod.PROMPT_VERSION,
-            "message": text, "warnings": warnings, "usage": usage,
-            "transits": [list(transit_key(t.aspect)) for t in ctx.transits]})
+        try:
+            cache.set(person, day, {
+                "date": day.isoformat(), "model": model, "prompt_version": prompt_mod.PROMPT_VERSION,
+                "message": text, "warnings": warnings, "usage": usage,
+                "transits": [list(transit_key(t.aspect)) for t in ctx.transits]})
+        except OSError:
+            pass        # disco cheio ou sem permissão: a mensagem já foi gerada (e paga), então ainda é entregue
     return DailyMessage(text, day, ctx, warnings, False, usage, system, user)

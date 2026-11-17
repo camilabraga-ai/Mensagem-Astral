@@ -19,7 +19,8 @@ ANTHROPIC_API_KEY = "sk-ant-..."
 1. **Tela inicial = formulário** (como no mockup): nome (opcional), data, horário e cidade; o país (padrão Brasil) fica em "Nasceu fora do Brasil?". Validação em português. O aviso sobre a natureza simbólica da astrologia fica em "Sobre a astrologia no Mensagem Astral" (e nos Termos de Uso), nunca no corpo da mensagem.
 2. **Local:** a cidade é buscada (Nominatim/OpenStreetMap). No caso comum (um resultado e horário sem ambiguidade) segue direto para a mensagem; se houver mais de um resultado ou dúvida de horário, aparece a tela "Confirme o local".
 4. **Horário de verão:** o motor natal lança erro para horários que não existiram ou que se repetiram na mudança de horário de verão. A interface detecta esses casos: horário inexistente bloqueia com uma explicação; horário ambíguo pede a escolha entre "horário de verão" e "horário padrão" (resolvida com um fuso fixo, sem alterar o motor).
-5. **Mensagem de hoje:** pipeline da Etapa 5 (trânsitos, RAG, Haiku, fidelidade).
+5. **Mensagem de hoje:** o botão principal ("Receber minha mensagem") calcula o mapa e, na mesma ação, gera a mensagem pelo pipeline da Etapa 5 (trânsitos, RAG, Haiku, fidelidade). Se a mensagem do dia já estiver em cache, ela aparece sem nenhuma chamada. Se a geração falhar, a tela explica o problema e oferece "Tentar novamente".
+6. **Navegação:** "Voltar" (na confirmação) preserva o que foi digitado; "Começar de novo" limpa tudo; recarregar a página volta ao formulário vazio.
 
 ## Identidade visual (mockup aprovado)
 Estrutura separada entre decoração e função:
@@ -38,7 +39,10 @@ app/static/fonts/          Cinzel (títulos) e Cormorant Garamond (texto), licen
 
 ## Controle de custos
 - A mensagem em cache (mesma pessoa, mesmo dia, mesmo modelo e versão do prompt) aparece **sem nenhuma chamada**.
-- A chamada à API só acontece quando a pessoa clica em **Gerar mensagem de hoje**; nada é gerado ao abrir a página.
+- A chamada à API só acontece logo após o clique no botão principal (ou em "Tentar novamente"); abrir a página, voltar, recarregar ou mexer na tela de resultado nunca gera nada.
+- A chave da pessoa/dia no cache usa o instante de nascimento e as coordenadas com 2 casas decimais, então pequenas variações do serviço de cidades não geram nova chamada. O cache vive em disco (`.cache/mensagens/`) e sobrevive a reinicializações do app.
+- Se não for possível gravar o cache (disco cheio), a mensagem gerada ainda é entregue.
+- O cliente da API tem timeout de 60 s (e 2 novas tentativas em falhas de rede), então a tela não fica presa.
 - Limite de 3 gerações por sessão (`MAX_GENERATIONS_PER_SESSION`).
 - Sem chave configurada, o botão não aparece e a tela explica que a geração está desativada.
 - O modelo é `claude-haiku-5-5` (`DEFAULT_MODEL`). Estimativa: ~US$ 0,0013 por mensagem.
@@ -56,7 +60,7 @@ A interface é testada de ponta a ponta com `streamlit.testing.v1.AppTest`, com 
 ## Limitações conhecidas
 - A reprodução do mockup é fiel na estrutura e no estilo, mas as ilustrações são desenhos vetoriais próprios (mais simples que as do mockup); dá para trocá-las por SVGs/PNGs finais de um ilustrador sem mexer na lógica.
 - Nos navegadores sem suporte a `:has()` (versões antigas), o placeholder dos campos de data e hora mostra os segmentos nativos (`dd/mm/aaaa`, `HH:mm`) em vez do rótulo.
-- O serviço gratuito de localização (Nominatim) tem limite de uso e pode falhar ou demorar; a busca é cacheada por 24 h.
+- O serviço gratuito de localização (Nominatim) tem limite de uso e pode falhar ou demorar; a busca é cacheada por 24 h. Os resultados são filtrados para localidades e mostrados como "Cidade, Estado, País"; homônimos aparecem para escolha.
 - Horário ambíguo usa um fuso fixo escolhido pela pessoa; o horário de referência dos trânsitos (meio-dia) usa esse mesmo fuso fixo.
 - Sem login: não há histórico por usuária nem proteção contra uso abusivo além do limite por sessão (que se zera ao recarregar a página).
 - O cache é local ao servidor; em hospedagens com disco efêmero ele se perde ao reiniciar.
