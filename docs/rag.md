@@ -25,7 +25,7 @@ Documentos recuperados por ponto: combinação (`planeta_signo` / `elemento_sign
 
 ## Resultados do primeiro teste real (2026-11-16)
 
-Modelo `claude-haiku-5-5`, effort `low`, 4 chamadas ao todo: 1 mapa (primeiro teste, com `max_tokens=2000`) e depois 3 mapas na seção 8 do notebook 04. Os dados de nascimento e as mensagens geradas **não** são registrados aqui.
+Modelo `claude-haiku-5-5`, effort `low`. Primeira rodada: 1 mapa (primeiro teste, `max_tokens=2000`) e 3 mapas na seção 8 do notebook 04. Os dados de nascimento e as mensagens geradas **não** são registrados aqui.
 
 | Item | Resultado |
 |---|---|
@@ -39,10 +39,23 @@ Modelo `claude-haiku-5-5`, effort `low`, 4 chamadas ao todo: 1 mapa (primeiro te
 
 **Ajuste feito:** a saída chegou a 1.970 tokens com `max_tokens=2000`, perto do corte. O padrão passou para 4000.
 
+### Segunda rodada: reforço contra cópia de frases da base
+
+O prompt de sistema passou a orientar que os textos de referência sejam usados "como fonte de ideias, não como texto". Mesmos 3 mapas, mesmo modelo.
+
+| Item | Antes do reforço | Depois |
+|---|---|---|
+| Fidelidade aos dados calculados | conferida, sem invenções | conferida, sem invenções |
+| Avisos de `check_faithfulness` | 0 (após correção do falso positivo) | 0 |
+| Frases reaproveitadas da base (Ascendente em Aquário: "diferença significativa… oposição") | presentes | ausentes (reescritas com outras palavras) |
+| Tokens de saída por mensagem | 1.781 / 1.970 / 1.913 | 830 / 1.291 / 1.587 |
+| Custo das 3 mensagens | US$ 0,0044 | US$ 0,0034 |
+| Estilo | texto mais entrelaçado | abertura integradora, um parágrafo por ponto do mapa e fecho; um pouco mais estruturado |
+
 ## Limitações conhecidas
 - Considera só Sol, Lua e Ascendente (outros planetas, Meio do Céu, nodos e Quíron existem na base, mas não são usados na mensagem).
 - Gera uma mensagem por mapa; não responde perguntas nem mantém conversa.
 - `check_faithfulness` é um alerta por palavras, não uma verificação semântica: uma invenção sem citar o nome de um planeta ou signo não é detectada.
-- A mensagem às vezes reaproveita expressões dos textos da base (ex.: "diferença significativa", no Ascendente em Aquário).
+- A mensagem pode reaproveitar expressões dos textos da base. O reforço no prompt eliminou o caso observado, mas não há medição automática de cópia.
 - A busca de endereços usa um serviço gratuito (Nominatim): um erro de digitação na cidade pode resolver para outro lugar sem aviso.
 - Avaliação feita com 4 mapas e leitura manual; não há métrica automática de qualidade.
