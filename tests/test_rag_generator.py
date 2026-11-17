@@ -92,7 +92,7 @@ def test_anthropic_llm_monta_requisicao_e_extrai_texto():
     client, cap = fake_client()
     out = AnthropicLLM(client=client).complete("SYS", "USER")
     assert out == "Olá."
-    assert cap["model"] == "claude-opus-5-5" and cap["system"] == "SYS"
+    assert cap["model"] == "claude-haiku-5-5" and cap["system"] == "SYS"
     assert cap["messages"] == [{"role": "user", "content": "USER"}]
     assert cap["output_config"] == {"effort": "low"} and "temperature" not in cap and "thinking" not in cap
 
@@ -108,3 +108,18 @@ def test_anthropic_llm_sem_texto_levanta_erro():
     client, _ = fake_client(content=[NS(type="thinking", text="")])
     with pytest.raises(LLMError):
         AnthropicLLM(client=client).complete("s", "u")
+
+
+def test_modelo_padrao_e_haiku_e_pode_ser_trocado():
+    from src.rag.generator import DEFAULT_MODEL
+    assert DEFAULT_MODEL == "claude-haiku-5-5"
+    client, cap = fake_client()
+    AnthropicLLM(model="claude-opus-5-5", client=client).complete("s", "u")
+    assert cap["model"] == "claude-opus-5-5"
+
+
+def test_notebook_mantem_chamada_paga_desligada_por_padrao():
+    import json
+    nb = json.loads((REPO_ROOT / "notebooks" / "04_rag.ipynb").read_text(encoding="utf-8"))
+    src = "\n".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code")
+    assert "CONFIRMO_CHAMADA_PAGA = False" in src

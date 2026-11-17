@@ -15,6 +15,8 @@ Documentos recuperados por ponto: combinação (`planeta_signo` / `elemento_sign
 
 **Fidelidade:** `check_faithfulness` avisa quando a mensagem cita signo, planeta/ponto, aspecto ou casa que não esteja nos dados calculados nem nos textos recuperados. É um alerta, não bloqueia.
 
+**Modelo:** padrão `claude-haiku-5-5` (menor custo), definido em `DEFAULT_MODEL` (`src/rag/generator.py`). Para trocar: `AnthropicLLM(model="claude-opus-5-5")`; nada mais depende do modelo.
+
 **Custo:** apenas `AnthropicLLM.complete` chama a API (paga). Testes usam LLM e cliente simulados. O notebook 04 deixa a chamada desligada por padrão (`CONFIRMO_CHAMADA_PAGA = False`).
 
 **Privacidade:** o prompt contém signos, graus e casas, e os textos da base. Data, hora e cidade de nascimento não são enviadas.

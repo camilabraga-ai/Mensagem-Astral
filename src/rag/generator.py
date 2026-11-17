@@ -9,7 +9,7 @@ from src.data.kb import KnowledgeBase
 from src.rag.prompt import build_prompt
 from src.rag.retriever import DEFAULT_POINTS, RetrievedContext, retrieve
 
-DEFAULT_MODEL = "claude-opus-5-5"
+DEFAULT_MODEL = "claude-haiku-5-5"   # padrão de menor custo; troque via AnthropicLLM(model=...)
 
 
 class LLMError(RuntimeError):
