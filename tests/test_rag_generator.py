@@ -169,3 +169,8 @@ def test_max_tokens_padrao_tem_folga_para_o_raciocinio_do_modelo():
     assert cap["max_tokens"] == 4000          # saídas reais ficaram perto de 2000 (texto + raciocínio)
     AnthropicLLM(client=client, max_tokens=1234).complete("s", "u")
     assert cap["max_tokens"] == 1234          # continua configurável
+
+
+def test_prompt_orienta_a_nao_copiar_os_textos_da_base():
+    assert "não repita frases ou expressões" in SYSTEM_PROMPT
+    assert "não como texto" in SYSTEM_PROMPT
