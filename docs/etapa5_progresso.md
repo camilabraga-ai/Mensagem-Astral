@@ -34,6 +34,10 @@ Chamadas pagas: nenhuma feita nesta etapa até agora; todas desligadas por padr�
   **sem aviso de leitura simbólica no corpo da mensagem** (o aviso fica nos Termos de Uso e no onboarding).
 - Custo observado: ~4,6 mil tokens de entrada e ~1,7 mil de saída por mensagem (≈ US$ 0,0013).
 - Qualquer mudança no prompt exige alterar `PROMPT_VERSION`, o que invalida o cache.
+- **Atualização (Etapa 6, `daily-6`):** a astrologia deixou de aparecer no texto. Ela é só o raciocínio interno (trânsitos
+  e referências do RAG, inalterados); a mensagem trata de uma situação cotidiana concreta, com reflexão ou sugestão útil,
+  sem nomes de planetas, signos, casas ou aspectos. Alerta (não bloqueia) `check_no_jargon` registra se algum termo escapar.
+  As mensagens `daily-3` continuam guardadas: o cache agora usa `<data>.<versão>.json`, então uma versão nunca sobrescreve outra.
 
 ## Fora do escopo desta etapa (candidatos para o futuro)
 - Trânsitos para outros pontos natais além de Sol, Lua e Ascendente.

@@ -46,6 +46,7 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
   color: var(--ma-text);
   font-family: var(--ma-serif-body);
   overflow: hidden;
+  flex-shrink: 0 !important;          /* não encolhe à altura da janela: a página rola, nada fica cortado */
 }
 .block-container::before {           /* moldura interna pontilhada */
   content: ""; position: absolute; inset: 9px; border: 1px dotted rgba(217,176,91,.38);
@@ -59,7 +60,7 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 /* ---------- ornamentos ---------- */
 .ma-gold { color: var(--ma-gold); }
 .ma-orn { display: block; width: 100%; height: auto; color: var(--ma-gold); }
-.ma-hero { margin: -.6rem 0 -.4rem; }
+.ma-hero { margin: -1.6rem auto -.6rem; max-width: 68%; }
 .ma-scene { margin: .2rem 0 .6rem; }
 .ma-divider { width: 78%; margin: .3rem auto; }
 .ma-corner { position: absolute; width: 26px; height: 26px; color: var(--ma-gold); z-index: 3; }

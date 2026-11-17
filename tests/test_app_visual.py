@@ -118,3 +118,11 @@ def test_servir_arquivos_estaticos_esta_habilitado():
 def test_decoracao_separada_da_logica():
     ornamentos = (REPO_ROOT / "app" / "ui" / "ornaments.py").read_text(encoding="utf-8")
     assert "streamlit" not in ornamentos and "src." not in ornamentos       # só desenho
+
+
+def test_cartao_principal_nao_encolhe_para_a_altura_da_janela():
+    """Mensagens longas não podem ser cortadas (o 'Seu mapa' sumia): o cartão tem overflow oculto, então não pode encolher."""
+    from pathlib import Path
+    css = (Path(__file__).resolve().parents[1] / "app" / "ui" / "theme.css").read_text(encoding="utf-8")
+    bloco = css[css.index(".block-container {"):css.index(".block-container::before")]
+    assert "flex-shrink: 0" in bloco

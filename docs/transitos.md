@@ -38,6 +38,7 @@ Significado geral do planeta, o planeta no signo em que está hoje, o aspecto e 
 
 ## Cache e custo
 - Chave: pessoa (hash do instante e local de nascimento) + data; vale para o mesmo modelo e a mesma `PROMPT_VERSION`.
+- Arquivo: `<pessoa>/<AAAA-MM-DD>.<PROMPT_VERSION>.json`; trocar a versão do prompt cria um arquivo novo e mantém o anterior (arquivos antigos `<data>.json` ainda são lidos).
 - A mensagem só é regerada se mudar a data, o modelo, a versão do prompt, ou com `force=True`.
 - Os arquivos ficam no Drive (`outputs/mensagens_diarias/`), nunca no GitHub, e não guardam os dados de nascimento em claro.
 - Chamadas pagas desligadas por padrão (`CONFIRMO_CHAMADA_PAGA_DIARIA = False` no notebook 05).

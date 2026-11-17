@@ -30,7 +30,7 @@ def daily_message(kb: KnowledgeBase, chart: dict, day: date, llm: LLM, cache: Da
     """Mensagem do dia. Com `cache`, a segunda consulta do mesmo dia não chama o LLM (nem custa nada)."""
     person = person_key(chart)
     model = getattr(llm, "model", type(llm).__name__)
-    recents = cache.recent(person, day, recent_days) if cache else []
+    recents = cache.recent(person, day, recent_days, prompt_mod.PROMPT_VERSION) if cache else []
     recent_keys = {tuple(k) for r in recents for k in r.get("transits", [])}
 
     ctx = build_daily_context(kb, chart, day, recent=recent_keys, top_n=top_n)
@@ -45,6 +45,7 @@ def daily_message(kb: KnowledgeBase, chart: dict, day: date, llm: LLM, cache: Da
 
     text = llm.complete(system, user)
     warnings = check_faithfulness(text, ctx.for_faithfulness())
+    warnings += prompt_mod.check_no_jargon(text)
     usage = getattr(llm, "last_usage", None)
     if cache:
         try:

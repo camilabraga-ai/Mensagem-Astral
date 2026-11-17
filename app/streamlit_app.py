@@ -88,8 +88,8 @@ def page_form():
                                placeholder="Cidade de nascimento (ex.: São Paulo, SP)", label_visibility="collapsed")
         with st.expander("Nasceu fora do Brasil?"):
             pais = st.text_input("País", value=sv.get("pais", "Brasil"), label_visibility="collapsed")
-        st.markdown(ui.moon_row() + ui.scene(), unsafe_allow_html=True)
         enviado = st.form_submit_button("Receber minha mensagem", type="primary", use_container_width=True)
+        st.markdown(ui.moon_row() + ui.scene(), unsafe_allow_html=True)
     st.markdown(ui.privacy_note("Seus dados são usados apenas para calcular seu mapa astral e gerar sua mensagem diária."),
                 unsafe_allow_html=True)
     about()

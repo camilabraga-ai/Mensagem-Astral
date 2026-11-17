@@ -200,6 +200,7 @@ def test_nome_aparece_na_saudacao_e_nao_vai_para_o_llm(ambiente):
 
 def test_sem_chave_a_geracao_fica_desativada_e_nada_e_enviado(ambiente, monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY")
+    monkeypatch.setattr(service, "get_api_key", lambda secrets=None: None)     # isola de um .streamlit/secrets.toml local
     at = ate_resultado(novo())
     assert "desativada" in textos(at) and ambiente.calls == [] and not at.exception
     assert sem_botao(at, "Gerar mensagem de hoje")
