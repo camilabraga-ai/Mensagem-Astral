@@ -123,6 +123,9 @@ def test_notebook_mantem_chamada_paga_desligada_por_padrao():
     nb = json.loads((REPO_ROOT / "notebooks" / "04_rag.ipynb").read_text(encoding="utf-8"))
     src = "\n".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code")
     assert "CONFIRMO_CHAMADA_PAGA = False" in src
+    assert "CONFIRMO_CHAMADA_PAGA_TESTES = False" in src        # seção de vários mapas também desligada
+    assert "CONFIRMO_CHAMADA_PAGA = True" not in src and "CONFIRMO_CHAMADA_PAGA_TESTES = True" not in src
+    assert "mapas_teste.json" in src and "birth" not in src.split("TESTES_FILE")[0][-0:]   # dados só no Drive
 
 
 def test_oposicao_no_sentido_comum_nao_gera_aviso():
@@ -139,3 +142,21 @@ def test_aspecto_inventado_continua_gerando_aviso():
     assert any("sextil" in w.lower() or "quadratura" in w
                for w in check_faithfulness("A quadratura de Saturno com a Lua pesa.", ctx))
     assert check_faithfulness("O sextil entre Sol e Lua favorece a conversa.", ctx) == []        # calculado
+
+
+def test_registro_de_consumo_de_tokens():
+    def create(**kw):
+        return NS(stop_reason="end_turn", stop_details=None, content=[NS(type="text", text="Olá.")],
+                  usage=NS(input_tokens=3000, output_tokens=700))
+    llm = AnthropicLLM(client=NS(messages=NS(create=create)))
+    out = generate_message(kb, fake_chart(), llm)
+    assert out.usage == {"input_tokens": 3000, "output_tokens": 700}
+    generate_message(kb, fake_chart(), llm)
+    assert llm.total_usage == {"input_tokens": 6000, "output_tokens": 1400, "calls": 2}
+
+
+def test_consumo_ausente_nao_quebra():
+    client, _ = fake_client()                  # resposta sem 'usage'
+    llm = AnthropicLLM(client=client)
+    assert llm.complete("s", "u") == "Olá." and llm.last_usage is None
+    assert generate_message(kb, fake_chart(), FakeLLM()).usage is None

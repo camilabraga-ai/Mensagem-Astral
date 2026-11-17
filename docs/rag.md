@@ -20,3 +20,5 @@ Documentos recuperados por ponto: combinação (`planeta_signo` / `elemento_sign
 **Custo:** apenas `AnthropicLLM.complete` chama a API (paga). Testes usam LLM e cliente simulados. O notebook 04 deixa a chamada desligada por padrão (`CONFIRMO_CHAMADA_PAGA = False`).
 
 **Privacidade:** o prompt contém signos, graus e casas, e os textos da base. Data, hora e cidade de nascimento não são enviadas.
+
+**Consumo e teste com vários mapas:** `AnthropicLLM` registra os tokens de cada chamada (`last_usage`, `total_usage`) e `generate_message` devolve `usage`. A seção 8 do notebook 04 gera mensagens para uma lista de mapas guardada só no Drive (`outputs/mapas_teste.json`), com flag própria desligada por padrão.

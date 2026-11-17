@@ -28,6 +28,8 @@ class AnthropicLLM:
             import anthropic
             client = anthropic.Anthropic()
         self.client, self.model, self.max_tokens, self.effort = client, model, max_tokens, effort
+        self.last_usage: dict | None = None                      # consumo da última chamada
+        self.total_usage = {"input_tokens": 0, "output_tokens": 0, "calls": 0}
 
     def complete(self, system: str, user: str) -> str:
         resp = self.client.messages.create(
@@ -35,6 +37,12 @@ class AnthropicLLM:
             output_config={"effort": self.effort},
             messages=[{"role": "user", "content": user}],
         )
+        usage = getattr(resp, "usage", None)
+        if usage is not None:
+            self.last_usage = {"input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens}
+            self.total_usage["input_tokens"] += usage.input_tokens
+            self.total_usage["output_tokens"] += usage.output_tokens
+            self.total_usage["calls"] += 1
         if resp.stop_reason == "refusal":
             raise LLMError(f"A API recusou a solicitação: {getattr(resp, 'stop_details', None)}")
         if resp.stop_reason == "max_tokens":
@@ -102,6 +110,7 @@ class AstralMessage:
     warnings: list[str] = field(default_factory=list)
     system: str = ""
     user: str = ""
+    usage: dict | None = None       # tokens da chamada (None se o LLM não informa)
 
 
 def generate_message(kb: KnowledgeBase, chart: dict, llm: LLM, keys=DEFAULT_POINTS) -> AstralMessage:
@@ -111,7 +120,7 @@ def generate_message(kb: KnowledgeBase, chart: dict, llm: LLM, keys=DEFAULT_POIN
         raise LLMError(f"Base sem documentos para: {ctx.missing}")
     system, user = build_prompt(ctx)
     text = llm.complete(system, user)
-    return AstralMessage(text, ctx, check_faithfulness(text, ctx), system, user)
+    return AstralMessage(text, ctx, check_faithfulness(text, ctx), system, user, getattr(llm, "last_usage", None))
 
 
 def message_from_birth(kb: KnowledgeBase, birth, llm: LLM, keys=DEFAULT_POINTS) -> AstralMessage:
