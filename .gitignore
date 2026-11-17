@@ -35,3 +35,7 @@ tests/reference_local.json
 # A base de conhecimento (conteúdo próprio, sem direitos de terceiros) é versionada
 !kb/
 !kb/*.jsonl
+
+# App web
+.cache/
+.streamlit/secrets.toml

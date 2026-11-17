@@ -1,0 +1,4 @@
+-r requirements-astrology.txt
+-r requirements-kb.txt
+-r requirements-rag.txt
+streamlit>=1.40

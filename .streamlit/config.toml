@@ -1,0 +1,14 @@
+# Identidade visual provisória
+[theme]
+base = "dark"
+primaryColor = "#c9a24d"
+backgroundColor = "#120f24"
+secondaryBackgroundColor = "#1d1838"
+textColor = "#f1ecfa"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
