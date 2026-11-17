@@ -17,7 +17,7 @@ mapa natal + data -> transit_positions (Kerykeion, meio-dia local) -> find_aspec
 
 ## Passos
 - [x] 1. Cálculo de trânsitos e aspectos (`src/transits/calc.py`, `tests/test_transits_calc.py`)
-- [ ] 2. Seleção dos trânsitos relevantes (`src/transits/select.py`)
+- [x] 2. Seleção dos trânsitos relevantes (`src/transits/select.py`, `tests/test_transits_select.py`): pontuação = aspecto × planeta × ponto natal × orbe, top 3, mínimo 0,15; penalidade 0,6 para trânsitos já destacados nos dias recentes (variedade diária)
 - [ ] 3. Recuperação na base (`src/transits/retrieval.py`)
 - [ ] 4. Prompt diário, geração e cache (`src/transits/prompt.py`, `cache.py`, `daily.py`)
 - [ ] 5. Notebook 05, documentação e README
