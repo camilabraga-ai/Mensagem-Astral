@@ -123,3 +123,19 @@ def test_notebook_mantem_chamada_paga_desligada_por_padrao():
     nb = json.loads((REPO_ROOT / "notebooks" / "04_rag.ipynb").read_text(encoding="utf-8"))
     src = "\n".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code")
     assert "CONFIRMO_CHAMADA_PAGA = False" in src
+
+
+def test_oposicao_no_sentido_comum_nao_gera_aviso():
+    ctx = retrieve(kb, fake_chart(aspectos=ASP))
+    msg = ("O Ascendente em Aquário convida a distinguir a diferença significativa da simples oposição, "
+           "e a perceber que pertencer a um grupo não exige abrir mão da singularidade.")
+    assert check_faithfulness(msg, ctx) == []
+
+
+def test_aspecto_inventado_continua_gerando_aviso():
+    ctx = retrieve(kb, fake_chart(aspectos=ASP))
+    assert any("oposição" in w for w in check_faithfulness("Há uma oposição entre o Sol e a Lua.", ctx))
+    assert any("trígono" in w for w in check_faithfulness("Um trígono favorece você.", ctx))      # estrito
+    assert any("sextil" in w.lower() or "quadratura" in w
+               for w in check_faithfulness("A quadratura de Saturno com a Lua pesa.", ctx))
+    assert check_faithfulness("O sextil entre Sol e Lua favorece a conversa.", ctx) == []        # calculado

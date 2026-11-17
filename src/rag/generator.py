@@ -51,6 +51,24 @@ _SIGNS = ["Áries", "Touro", "Gêmeos", "Câncer", "Leão", "Virgem", "Libra", "
 _BODIES = ["Sol", "Lua", "Mercúrio", "Vênus", "Marte", "Júpiter", "Saturno", "Urano", "Netuno", "Plutão",
            "Quíron", "Ascendente", "Meio do Céu", "Nodo Norte", "Nodo Sul"]
 _ASPECTS = ["conjunção", "sextil", "quadratura", "trígono", "oposição"]
+# "oposição", "conjunção" e "quadratura" também são palavras comuns ("simples oposição"). Elas só contam
+# como aspecto quando aparecem perto do nome de um planeta/ponto; "sextil" e "trígono" valem em qualquer uso.
+_AMBIGUOUS_ASPECTS = {"conjunção", "quadratura", "oposição"}
+_ASPECT_WINDOW = 60   # caracteres
+
+
+def _aspect_mentions(text: str) -> set[str]:
+    found = _mentions(text, _ASPECTS)
+    for term in found & _AMBIGUOUS_ASPECTS:
+        near = False
+        for m in re.finditer(rf"(?<!\w){re.escape(term)}(?!\w)", text, re.IGNORECASE):
+            around = text[max(0, m.start() - _ASPECT_WINDOW): m.end() + _ASPECT_WINDOW]
+            if _mentions(around, _BODIES):
+                near = True
+                break
+        if not near:
+            found.discard(term)
+    return found
 
 
 def _mentions(text: str, terms: list[str]) -> set[str]:
@@ -64,8 +82,12 @@ def check_faithfulness(message: str, ctx: RetrievedContext) -> list[str]:
                           + [a.aspect_pt + " " + str(a.p1) for a in ctx.aspects])
     allowed_text = reference + " " + calculated
     warnings = []
-    for group, name in ((_SIGNS, "signo"), (_BODIES, "ponto/planeta"), (_ASPECTS, "aspecto")):
-        extra = _mentions(message, group) - _mentions(allowed_text, group)
+    for group, name, finder in ((_SIGNS, "signo", _mentions), (_BODIES, "ponto/planeta", _mentions),
+                                (_ASPECTS, "aspecto", None)):
+        if finder is None:
+            extra = _aspect_mentions(message) - _mentions(allowed_text, group)
+        else:
+            extra = finder(message, group) - finder(allowed_text, group)
         warnings += [f"{name} '{t}' citado sem estar nos dados calculados ou recuperados" for t in sorted(extra)]
     houses_ok = {p.house for p in ctx.placements if p.house} | {int(n) for n in re.findall(r"casa (\d+)", reference)}
     for n in sorted({int(n) for n in re.findall(r"casa (\d+)", message, re.IGNORECASE)} - houses_ok):
