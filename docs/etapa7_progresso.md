@@ -1,6 +1,6 @@
 # Etapa 7 — Preparação e publicação do MVP (progresso)
 
-Status: **Fase 1 (preparação) concluída e aprovada em 2026-11-17.** Fase 2 (publicação) **não iniciada**: o app ainda não foi publicado e só será publicado com autorização expressa da usuária. A Etapa 7 não está concluída.
+Status: **CONCLUÍDA — confirmada pela usuária em 2026-11-17.** Fases 1 e 2 executadas: app público publicado em https://mensagem-astral.streamlit.app/ (ver `docs/publicacao.md`), validado no endereço publicado e testado pela usuária em celular real.
 
 **Decisão da usuária (2026-11-17), que substitui a recomendação de app privado:** publicar como **aplicativo público no Streamlit Community Cloud, sem login nem autenticação**, compartilhando o link inicialmente com um pequeno grupo para testar o MVP. Mantidos: repositório GitHub privado, chave da Anthropic nos Secrets, limites internos de 40 mensagens/dia e 12/hora, cache e proteções, interface e funcionalidades aprovadas. A usuária já tem um limite de gastos configurado no console da Anthropic.
 

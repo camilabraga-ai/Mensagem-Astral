@@ -18,7 +18,7 @@ base de conhecimento (RAG) + LLM, com avaliação de fine-tuning LoRA como etapa
 - [x] Etapa 5 – Trânsitos e mensagem diária (trânsitos Kerykeion, seleção, RAG, Haiku 5.5, cache por pessoa/dia; ver docs/transitos.md)
 - [ ] Fine-tuning (LoRA) – adiado
 - [x] Etapa 6 – Interface web (Streamlit) (concluída e confirmada em 2026-11-17; ver docs/app.md e docs/etapa6_progresso.md)
-- [~] Etapa 7 – Preparação e publicação do MVP (Fase 1, preparação, em andamento; ver docs/etapa7_progresso.md)
+- [x] Etapa 7 – Preparação e publicação do MVP (concluída e confirmada em 2026-11-17; app público em https://mensagem-astral.streamlit.app/; ver docs/etapa7_progresso.md e docs/publicacao.md)
 - [ ] Avaliação e documentação final
 
 ## Interface web
