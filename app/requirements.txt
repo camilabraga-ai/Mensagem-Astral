@@ -1,0 +1,11 @@
+# Dependências do aplicativo publicado (Streamlit Community Cloud).
+# A Cloud usa UM único arquivo de dependências e procura primeiro na pasta do arquivo principal (app/), por isso este
+# arquivo existe: o requirements.txt da raiz é só do ambiente de desenvolvimento/Colab e NÃO instala o aplicativo.
+# Cobre requirements-app/astrology/kb/rag.txt + pyyaml (há um teste que confere).
+streamlit>=1.40,<2
+kerykeion>=6.1,<7
+geopy>=2.4
+timezonefinder>=6.5
+jsonschema>=4.20
+anthropic>=1.0
+pyyaml>=6.0                # src/common/env.py importa yaml; o Streamlit não o traz sozinho

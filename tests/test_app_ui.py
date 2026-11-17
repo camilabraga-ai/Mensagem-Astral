@@ -196,6 +196,7 @@ def test_nome_aparece_na_saudacao_e_nao_vai_para_o_llm(ambiente):
     assert any("Olá, Marina" in m.value for m in at.markdown)
     sistema, usuario = ambiente.calls[0]
     assert "Marina" not in sistema and "Marina" not in usuario and "1990" not in usuario
+    assert "São Paulo" not in usuario and "10:30" not in usuario and "-23.55" not in usuario     # nem o local nem a hora
 
 
 def test_sem_chave_a_geracao_fica_desativada_e_nada_e_enviado(ambiente, monkeypatch):
@@ -312,3 +313,54 @@ def test_modo_previa_mostra_o_visual_sem_api_nem_calculo(monkeypatch, tmp_path):
     at = AppTest.from_file(APP, default_timeout=60); at.run()
     assert not at.exception and [x.value for x in at.title] == ["Sua mensagem de hoje"]
     assert "Pré-visualização" in textos(at) and not at.button
+
+
+# ------------------------------------------------------------------ limite global e privacidade (Etapa 7)
+def test_limite_diario_global_bloqueia_sem_chamada_e_sem_botao(ambiente, monkeypatch):
+    monkeypatch.setenv("MAX_DAILY_GENERATIONS", "0")
+    at = ate_resultado(novo())
+    assert "limite diário" in textos(at) and ambiente.calls == [] and not at.exception
+    assert sem_botao(at, "Gerar mensagem de hoje") and sem_botao(at, "Tentar novamente")
+
+
+def test_limite_por_hora_avisa_e_permite_tentar_de_novo_sem_chamada(ambiente, monkeypatch):
+    monkeypatch.setenv("MAX_HOURLY_GENERATIONS", "0")
+    at = ate_resultado(novo())
+    assert "Muitas pessoas estão pedindo" in textos(at) and ambiente.calls == [] and not at.exception
+    assert botao(at, "Tentar novamente")
+    botao(at, "Tentar novamente").click(); at.run()
+    assert ambiente.calls == [] and "Muitas pessoas" in textos(at)
+
+
+def test_geracao_pausada_pela_chave_de_emergencia(ambiente, monkeypatch):
+    monkeypatch.setenv("GENERATION_ENABLED", "false")
+    at = ate_resultado(novo())
+    assert "temporariamente pausada" in textos(at) and ambiente.calls == []
+
+
+def test_mensagem_em_cache_aparece_mesmo_com_geracao_pausada(ambiente, monkeypatch):
+    ate_resultado(novo())                                     # gera e guarda (1 chamada)
+    assert len(ambiente.calls) == 1
+    monkeypatch.setenv("GENERATION_ENABLED", "false")
+    at = ate_resultado(novo())
+    assert MSG in textos(at) and len(ambiente.calls) == 1
+
+
+def test_limite_global_vale_entre_sessoes_diferentes(ambiente, monkeypatch):
+    monkeypatch.setenv("MAX_DAILY_GENERATIONS", "1")
+    primeira = ate_resultado(novo(), data=date(1990, 6, 15))
+    assert MSG in textos(primeira) and len(ambiente.calls) == 1
+    segunda = ate_resultado(novo(), data=date(1985, 6, 15))   # outra sessão, outra pessoa, nada em cache
+    assert "limite diário" in textos(segunda) and len(ambiente.calls) == 1
+
+
+def test_privacidade_e_termos_ficam_na_tela_inicial_e_nao_no_corpo_da_mensagem(ambiente):
+    at = novo()
+    assert any(e.label == "Privacidade e termos de uso" for e in at.expander)
+    texto = textos(at)
+    for trecho in ("Anthropic", "OpenStreetMap", "Não vendemos dados", "não tem comprovação científica",
+                   "não substituem orientação médica"):
+        assert trecho in texto
+    resultado = ate_resultado(novo())
+    quadro = [m.value for m in resultado.markdown if "ma-frame" in m.value][0]
+    assert "Privacidade" not in quadro and "comprovação" not in quadro

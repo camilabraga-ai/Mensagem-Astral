@@ -62,3 +62,10 @@ def test_fuso_fixo_por_deslocamento(h, nome):
 def test_fuso_fracionado_nao_suportado():
     with pytest.raises(ValueError):
         fixed_offset_tz(5.5)
+
+
+def test_cidade_e_pais_com_tamanho_absurdo_sao_recusados():
+    base = dict(nome="Ana", data=date(1990, 5, 1), hora=time(10, 30), pais="Brasil", today=date(2026, 11, 17))
+    assert any("cidade" in e for e in validate_form(cidade="x" * 101, **base))
+    assert any("país" in e for e in validate_form(**{**base, "pais": "y" * 61}, cidade="São Paulo"))
+    assert validate_form(cidade="x" * 100, **base) == []

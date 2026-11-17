@@ -8,12 +8,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import streamlit as st
 
 from app.ui import components as ui
+from app.ui import legal
 from src.app import service
 from src.app.geo import GeoError, search_places
 from src.app.validation import MIN_DATE, check_local_time, validate_form
 from src.transits.cache import DailyCache
 
 st.set_page_config(page_title="Mensagem Astral", page_icon="✨", layout="centered")
+service.apply_secret_settings(st.secrets)         # sal do cache (opcional); nunca exibido
 st.markdown(ui.theme_style_tag(), unsafe_allow_html=True)
 
 SS = st.session_state
@@ -52,6 +54,11 @@ def about():
         st.write("A astrologia é uma linguagem simbólica para refletir sobre o dia. Não é uma ciência nem uma "
                  "previsão, e as mensagens são um convite à reflexão, não uma orientação médica, financeira ou jurídica. "
                  "Não pedimos login e não guardamos seus dados de nascimento: só a mensagem do dia, identificada por um código.")
+    with st.expander("Privacidade e termos de uso"):
+        st.markdown("##### Privacidade")
+        st.markdown(legal.PRIVACIDADE)
+        st.markdown("##### Termos de uso")
+        st.markdown(legal.TERMOS)
 
 
 def proceed(place, offset):
@@ -84,10 +91,10 @@ def page_form():
         data = st.date_input("Data de nascimento", value=sv.get("data"), min_value=MIN_DATE, max_value=today,
                              format="DD/MM/YYYY", label_visibility="collapsed")
         hora = st.time_input("Horário de nascimento", value=sv.get("hora"), step=60, label_visibility="collapsed")
-        cidade = st.text_input("Cidade de nascimento", value=sv.get("cidade", ""),
+        cidade = st.text_input("Cidade de nascimento", value=sv.get("cidade", ""), max_chars=100,
                                placeholder="Cidade de nascimento (ex.: São Paulo, SP)", label_visibility="collapsed")
         with st.expander("Nasceu fora do Brasil?"):
-            pais = st.text_input("País", value=sv.get("pais", "Brasil"), label_visibility="collapsed")
+            pais = st.text_input("País", value=sv.get("pais", "Brasil"), max_chars=60, label_visibility="collapsed")
         enviado = st.form_submit_button("Receber minha mensagem", type="primary", use_container_width=True)
         st.markdown(ui.moon_row() + ui.scene(), unsafe_allow_html=True)
     st.markdown(ui.privacy_note("Seus dados são usados apenas para calcular seu mapa astral e gerar sua mensagem diária."),
@@ -177,8 +184,12 @@ def page_result():
     note = ""
     if msg is None:
         key = service.get_api_key(st.secrets)
+        limiter = service.usage_limiter(st.secrets)             # limite GLOBAL (todas as sessões)
+        bloqueio = limiter.check()
         if not key:
             note = "A geração de mensagens está desativada neste ambiente (chave de acesso não configurada)."
+        elif bloqueio in ("off", "day"):
+            note = service.limit_message(bloqueio)
         elif SS.gen_count >= service.MAX_GENERATIONS_PER_SESSION:
             note = "Você atingiu o limite de mensagens desta sessão. Volte mais tarde."
         else:
@@ -193,10 +204,20 @@ def page_result():
             if auto or clicou:
                 try:
                     with slot, st.spinner("Escrevendo a sua mensagem..."):
-                        msg = service.generate_message(kb, chart, day, service.build_llm(key), cache)
-                    SS.gen_count += 1
+                        msg = service.generate_message(kb, chart, day, service.build_llm(key), cache, limiter)
+                    if not msg.from_cache:                  # outra sessão pode ter gerado no meio-tempo: sem custo
+                        SS.gen_count += 1
                     SS.gen_failed = False
                     botao_slot.empty()
+                except service.LimitReached as e:           # limite global: nenhuma chamada foi feita
+                    note = service.limit_message(e.reason)
+                    SS.gen_failed = False
+                    if e.reason == "hour":
+                        if auto:        # o botão ainda não foi desenhado nesta execução
+                            with botao_slot:
+                                st.button("Tentar novamente", type="primary", use_container_width=True, key="gen")
+                    else:
+                        botao_slot.empty()
                 except Exception as e:
                     SS.gen_failed = True
                     st.error(service.friendly_error(e))

@@ -25,8 +25,12 @@ def validate_form(nome: str | None, data: date | None, hora: time | None, cidade
         erros.append("Informe a cidade de nascimento.")
     elif len(cidade.strip()) < 2:
         erros.append("O nome da cidade parece curto demais.")
+    elif len(cidade.strip()) > 100:
+        erros.append("O nome da cidade pode ter no máximo 100 caracteres.")
     if not (pais or "").strip():
         erros.append("Informe o país de nascimento.")
+    if (pais or "").strip() and len(pais.strip()) > 60:
+        erros.append("O nome do país pode ter no máximo 60 caracteres.")
     if nome and len(nome.strip()) > 60:
         erros.append("O nome pode ter no máximo 60 caracteres.")
     return erros

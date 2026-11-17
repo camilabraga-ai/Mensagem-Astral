@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import threading
 from datetime import date, datetime, time, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -13,6 +14,9 @@ from src.rag.generator import DEFAULT_MODEL, AnthropicLLM, LLMError
 from src.transits.cache import DailyCache
 from src.transits.daily import DailyMessage, daily_message
 from src.app.geo import Place
+from src.app.limits import (DEFAULT_MAX_DAILY, DEFAULT_MAX_HOURLY, LimitReached, UsageLimiter,  # noqa: F401
+                            limit_message)
+from src.transits.cache import person_key
 from src.app.validation import check_local_time, fixed_offset_tz
 
 MAX_GENERATIONS_PER_SESSION = 3
@@ -25,7 +29,9 @@ class CacheMiss(Exception):
 
 class _CacheOnlyLLM:
     """LLM que nunca chama a API: se for acionado, é porque não havia mensagem em cache."""
-    model = DEFAULT_MODEL
+
+    def __init__(self, model: str = DEFAULT_MODEL):
+        self.model = model
 
     def complete(self, system: str, user: str) -> str:
         raise CacheMiss()
@@ -33,6 +39,47 @@ class _CacheOnlyLLM:
 
 def cache_dir() -> Path:
     return Path(os.environ.get("MENSAGEM_ASTRAL_CACHE_DIR") or REPO_ROOT / ".cache" / "mensagens")
+
+
+def usage_dir() -> Path:
+    return Path(os.environ.get("MENSAGEM_ASTRAL_USAGE_DIR") or cache_dir().parent / "uso")
+
+
+def read_setting(name: str, secrets=None, default=None):
+    """Configuração: variável de ambiente ou Secrets do Streamlit (o ambiente tem prioridade)."""
+    value = os.environ.get(name)
+    if value in (None, "") and secrets is not None:
+        try:
+            value = secrets.get(name)
+        except Exception:
+            value = None
+    return default if value in (None, "") else value
+
+
+def _as_int(value, default: int) -> int:
+    try:
+        n = int(str(value).strip())
+        return n if n >= 0 else default
+    except (TypeError, ValueError):
+        return default
+
+
+def usage_limiter(secrets=None) -> UsageLimiter:
+    """Limite global de gerações. Ajustável por Secrets/ambiente: MAX_DAILY_GENERATIONS, MAX_HOURLY_GENERATIONS e
+    GENERATION_ENABLED (false pausa toda geração nova, útil como chave de emergência)."""
+    enabled = str(read_setting("GENERATION_ENABLED", secrets, "true")).strip().lower() not in \
+        {"0", "false", "no", "off", "nao", "não"}
+    return UsageLimiter(usage_dir(),
+                        _as_int(read_setting("MAX_DAILY_GENERATIONS", secrets), DEFAULT_MAX_DAILY),
+                        _as_int(read_setting("MAX_HOURLY_GENERATIONS", secrets), DEFAULT_MAX_HOURLY),
+                        enabled=enabled)
+
+
+def apply_secret_settings(secrets=None) -> None:
+    """Leva ao ambiente o que o cache precisa (o sal do código de pessoa), venha dos Secrets ou do ambiente."""
+    salt = read_setting("CACHE_SALT", secrets) or read_setting("MENSAGEM_ASTRAL_CACHE_SALT", secrets)
+    if salt:
+        os.environ["MENSAGEM_ASTRAL_CACHE_SALT"] = str(salt)
 
 
 def get_api_key(secrets=None) -> str | None:
@@ -78,17 +125,38 @@ def build_chart(place: Place, data: date, hora: time, offset_hours: float | None
                                      place.label.split(",")[0], "", lat=place.lat, lng=place.lng, tz_str=tz))
 
 
-def cached_message(kb: KnowledgeBase, chart: dict, day: date, cache: DailyCache) -> DailyMessage | None:
+def cached_message(kb: KnowledgeBase, chart: dict, day: date, cache: DailyCache,
+                   model: str = DEFAULT_MODEL) -> DailyMessage | None:
     """Mensagem já guardada para esta pessoa e dia, ou None. Nunca chama a API."""
     try:
-        return daily_message(kb, chart, day, _CacheOnlyLLM(), cache)
+        return daily_message(kb, chart, day, _CacheOnlyLLM(model), cache)
     except CacheMiss:
         return None
 
 
-def generate_message(kb: KnowledgeBase, chart: dict, day: date, llm, cache: DailyCache) -> DailyMessage:
-    """Gera (UMA chamada paga) e guarda no cache. Só deve ser chamada após ação explícita da pessoa."""
-    return daily_message(kb, chart, day, llm, cache)
+_KEY_LOCKS: dict[tuple[str, str], threading.Lock] = {}
+_KEY_LOCKS_GUARD = threading.Lock()
+
+
+def _key_lock(person: str, day: date) -> threading.Lock:
+    with _KEY_LOCKS_GUARD:
+        return _KEY_LOCKS.setdefault((person, day.isoformat()), threading.Lock())
+
+
+def generate_message(kb: KnowledgeBase, chart: dict, day: date, llm, cache: DailyCache,
+                     limiter: UsageLimiter | None = None) -> DailyMessage:
+    """Gera (UMA chamada paga) e guarda no cache. Só deve ser chamada após ação explícita da pessoa.
+
+    Duas sessões pedindo a MESMA pessoa/dia ao mesmo tempo não pagam duas vezes: a segunda espera e lê o cache.
+    Com `limiter`, a geração nova reserva uma vaga no limite global; sem vaga, levanta LimitReached (sem chamada).
+    """
+    with _key_lock(person_key(chart), day):
+        hit = cached_message(kb, chart, day, cache, getattr(llm, "model", DEFAULT_MODEL))
+        if hit is not None:
+            return hit
+        if limiter is not None:
+            limiter.acquire()
+        return daily_message(kb, chart, day, llm, cache)
 
 
 def friendly_error(exc: Exception) -> str:

@@ -1,6 +1,6 @@
 # Etapa 6 — Interface web e experiência do usuário (progresso)
 
-Status: **implementada e testada localmente; aguardando revisão e confirmação da usuária** (não marcar como concluída sem confirmação). O aplicativo **não foi publicado**.
+Status: **CONCLUÍDA — confirmada pela usuária em 2026-11-17** (interface e estilo editorial aprovados). O aplicativo roda localmente; a publicação é a Etapa 7 (`docs/etapa7_progresso.md`).
 
 ## Entregue
 - `app/streamlit_app.py`: telas inicial, formulário, confirmação de local/horário e mensagem do dia.
@@ -22,12 +22,12 @@ Status: **implementada e testada localmente; aguardando revisão e confirmação
 - Verificado no Chrome com o app real e LLM simulado: 0 chamadas ao abrir; 1 chamada ao enviar; 0 na repetição.
 
 ## Preservado
-Motor astrológico, RAG, trânsitos, prompt editorial aprovado (`daily-3`) e os 224 textos: nenhum foi alterado.
+Motor astrológico, RAG, trânsitos, prompt editorial (a versão aprovada nesta etapa é a `daily-6`; ver `docs/etapa5_progresso.md`) e os 224 textos: nenhum foi alterado.
 
 ## Chamadas pagas
 Nenhuma foi feita nesta etapa. Todos os testes usam LLM simulado. Haiku 5.5 é o modelo padrão.
 
-## Pendente
+## Pendente (resolvido ou movido para a Etapa 7)
 - Usuária avaliar o visual (desktop e celular) e pedir ajustes nas ilustrações/tipografia.
 - Teste pago real, somente com autorização.
 - Confirmação para marcar a Etapa 6 como concluída; decisões de publicação (ver `docs/app.md`).

@@ -44,6 +44,8 @@ app/static/fonts/          Cinzel (títulos) e Cormorant Garamond (texto), licen
 - Se não for possível gravar o cache (disco cheio), a mensagem gerada ainda é entregue.
 - O cliente da API tem timeout de 60 s (e 2 novas tentativas em falhas de rede), então a tela não fica presa.
 - Limite de 3 gerações por sessão (`MAX_GENERATIONS_PER_SESSION`).
+- **Limite global (Etapa 7)** para todas as sessões do servidor: no máximo 40 mensagens novas por dia e 12 por hora (cache hit não conta). Configurável nos Secrets/ambiente: `MAX_DAILY_GENERATIONS`, `MAX_HOURLY_GENERATIONS`; `GENERATION_ENABLED = "false"` pausa toda geração nova (chave de emergência; mensagens já guardadas continuam aparecendo). O contador fica em `.cache/uso/` (código em `src/app/limits.py`). Pior caso de gasto: 40 x ~US$ 0,003 = ~US$ 0,12 por dia.
+- Duas sessões pedindo a mesma pessoa e dia ao mesmo tempo pagam **uma** só chamada.
 - Sem chave configurada, o botão não aparece e a tela explica que a geração está desativada.
 - O modelo é `claude-haiku-5-5` (`DEFAULT_MODEL`). Estimativa: ~US$ 0,0013 por mensagem.
 
@@ -51,6 +53,10 @@ app/static/fonts/          Cinzel (títulos) e Cormorant Garamond (texto), licen
 - A chave vem de `ANTHROPIC_API_KEY` (ambiente) ou dos Secrets do Streamlit; nunca é exibida nem registrada, e as mensagens de erro não a contêm.
 - O nome digitado é usado só na saudação; **não é enviado ao modelo**. Data, hora e cidade também não vão no prompt (só signos, graus e textos da base).
 - O cache guarda a mensagem, a data, o modelo e os trânsitos, em arquivos identificados por um hash do instante e do local de nascimento; os dados de nascimento não ficam gravados em claro. Pasta padrão: `.cache/mensagens/` (ignorada pelo git; mude com `MENSAGEM_ASTRAL_CACHE_DIR`).
+- Com o Secret opcional `CACHE_SALT`, o código da pessoa vira um HMAC com sal secreto (sem ele, quem tivesse acesso aos arquivos poderia adivinhar o hash por força bruta, pois data/hora/local têm pouca entropia). Trocar o sal descarta o cache existente.
+- Gravação do cache atômica (nunca se lê arquivo pela metade) e arquivo `<data>.<versão-do-prompt>.json`.
+- Privacidade e termos de uso: expander "Privacidade e termos de uso" na tela inicial (texto em `app/ui/legal.py`, resumo em `docs/privacidade.md`), nunca no corpo da mensagem.
+- Dependências da publicação: `app/requirements.txt` (a Streamlit Community Cloud usa um único arquivo, procurado primeiro na pasta do arquivo principal). O `requirements.txt` da raiz é só do Colab/desenvolvimento.
 
 ## Testes
 `python -m pytest tests/test_app_validation.py tests/test_app_service.py tests/test_app_ui.py`
@@ -62,12 +68,12 @@ A interface é testada de ponta a ponta com `streamlit.testing.v1.AppTest`, com 
 - Nos navegadores sem suporte a `:has()` (versões antigas), o placeholder dos campos de data e hora mostra os segmentos nativos (`dd/mm/aaaa`, `HH:mm`) em vez do rótulo.
 - O serviço gratuito de localização (Nominatim) tem limite de uso e pode falhar ou demorar; a busca é cacheada por 24 h. Os resultados são filtrados para localidades e mostrados como "Cidade, Estado, País"; homônimos aparecem para escolha.
 - Horário ambíguo usa um fuso fixo escolhido pela pessoa; o horário de referência dos trânsitos (meio-dia) usa esse mesmo fuso fixo.
-- Sem login: não há histórico por usuária nem proteção contra uso abusivo além do limite por sessão (que se zera ao recarregar a página).
+- Sem login: não há histórico por usuária. A proteção contra uso abusivo é o limite global (Etapa 7) mais o limite por sessão (que se zera ao recarregar a página).
 - O cache é local ao servidor; em hospedagens com disco efêmero ele se perde ao reiniciar.
 - A página mostra só a mensagem do dia (não há mensagens de outros dias nem perguntas e respostas).
 - A aparência foi conferida em capturas do Chrome (celular e desktop); falta a revisão da usuária em outros navegadores e aparelhos.
 
-## Próximos passos para publicação (não executados)
+## Próximos passos para publicação (ver docs/etapa7_progresso.md)
 1. Revisar a interface num navegador (desktop e celular) e ajustar a identidade visual.
 2. Escolher a hospedagem (por exemplo Streamlit Community Cloud) e cadastrar `ANTHROPIC_API_KEY` nos Secrets dela, com **limite de gasto** configurado no console da Anthropic.
 3. Trocar a busca de cidades por um serviço com garantia de uso em produção (ou manter o Nominatim com cache e respeitando a política de uso).

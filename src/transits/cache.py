@@ -8,7 +8,10 @@ prompt (PROMPT_VERSION), ou quando se pede `force=True`. Em produção a raiz fi
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
+import os
+import threading
 from datetime import date
 from pathlib import Path
 
@@ -17,6 +20,11 @@ def person_key(chart: dict) -> str:
     n = chart["nascimento"]
     # coordenadas com 2 casas (~1 km): o serviço de cidades pode variar nas últimas casas e isso não deve gerar nova chamada
     raw = json.dumps([n["horario_utc"], round(n["latitude"], 2), round(n["longitude"], 2)])
+    # Com um sal secreto (MENSAGEM_ASTRAL_CACHE_SALT) o código não pode ser refeito por quem só tem os arquivos do cache:
+    # data/hora/local de nascimento têm pouca entropia e um hash simples poderia ser adivinhado por força bruta.
+    salt = os.environ.get("MENSAGEM_ASTRAL_CACHE_SALT")
+    if salt:
+        return hmac.new(salt.encode(), raw.encode(), hashlib.sha256).hexdigest()[:16]
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
@@ -46,7 +54,10 @@ class DailyCache:
     def set(self, person: str, day: date, record: dict) -> Path:
         path = self._path(person, day, record["prompt_version"])
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(record, ensure_ascii=False, indent=1), encoding="utf-8")
+        # gravação atômica: outra sessão nunca lê um arquivo pela metade (vários usuários no mesmo servidor)
+        tmp = path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
+        tmp.write_text(json.dumps(record, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.replace(tmp, path)
         return path
 
     def recent(self, person: str, before: date, n: int = 2, prompt_version: str | None = None) -> list[dict]:
