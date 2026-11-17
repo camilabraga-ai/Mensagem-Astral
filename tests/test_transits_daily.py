@@ -75,13 +75,33 @@ def test_prompt_nao_envia_dados_de_nascimento(natal):
     assert "Greenwich" not in user and "2000" not in user and "12:00" not in user
 
 
-def test_prompt_define_estilo_editorial_curto_e_pessoal():
+def test_prompt_define_estilo_conversacional_curto():
     p = DAILY_SYSTEM_PROMPT
     assert "no máximo 2 parágrafos curtos" in p and "entre 70 e 100 palavras" in p
-    assert "pessoal, acolhedor, contemporâneo e levemente poético" in p
-    assert "Nada de previsões" in p and "reflexão ou uma sugestão prática" in p
-    assert "sem jargão técnico" in p and "não precisa explicar todos eles" in p
-    assert "frases genéricas" in p and "não repita ideias, aberturas" in p
+    assert "natural, contemporâneo, inteligente e conversacional" in p
+    assert "Frases simples, fluidas e objetivas" in p
+    assert "Nada de previsões" in p
+    assert "não recontar quem a pessoa é" in p and "não repita ideias, aberturas" in p
+
+
+def test_prompt_proibe_poesia_metaforas_e_construcoes_artificiais():
+    p = DAILY_SYSTEM_PROMPT
+    assert "Sem metáforas, frases de efeito ou linguagem poética" in p
+    for expressao in ("o céu convida", "dar forma às ideias", "deixar a sensação assentar"):
+        assert expressao in p                       # citadas como exemplos do que evitar
+    assert "levemente poético" not in p             # a instrução da versão anterior saiu
+
+
+def test_prompt_mantem_astrologia_como_base_sem_virar_explicacao_tecnica():
+    p = DAILY_SYSTEM_PROMPT
+    assert "A astrologia é o fundamento" in p and "não é uma explicação técnica" in p
+    assert "no máximo um ou dois elementos do céu" in p and "Sem jargão" in p
+
+
+def test_prompt_pede_observacao_e_sugestao_pratica_sem_autoajuda():
+    p = DAILY_SYSTEM_PROMPT
+    assert "observação relevante" in p and "sugestão prática pequena e concreta" in p
+    assert "autoajuda" in p and "aconselhamento terapêutico" in p
 
 
 def test_prompt_nao_pede_aviso_de_leitura_simbolica_e_o_proibe():
@@ -91,7 +111,7 @@ def test_prompt_nao_pede_aviso_de_leitura_simbolica_e_o_proibe():
 
 
 def test_versao_do_prompt_mudou_para_invalidar_mensagens_em_cache():
-    assert prompt_mod.PROMPT_VERSION != "daily-1"
+    assert prompt_mod.PROMPT_VERSION not in ("daily-1", "daily-2")
 
 
 # ---------------- pipeline e fidelidade ----------------
