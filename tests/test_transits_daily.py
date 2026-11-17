@@ -202,3 +202,11 @@ def test_dia_seguinte_recebe_mensagem_anterior_e_penaliza_transito_repetido(nata
 def test_chamadas_pagas_exigem_llm_explicito():
     import inspect
     assert inspect.signature(daily_message).parameters["llm"].default is inspect.Parameter.empty
+
+
+def test_notebook_05_mantem_chamada_paga_desligada_e_sem_dados_pessoais():
+    nb = json.loads((REPO_ROOT / "notebooks" / "05_transitos.ipynb").read_text(encoding="utf-8"))
+    src = "\n".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code")
+    assert "CONFIRMO_CHAMADA_PAGA_DIARIA = False" in src and "CONFIRMO_CHAMADA_PAGA_DIARIA = True" not in src
+    assert "DEFAULT_MODEL" in src and "mensagens_diarias" in src        # modelo padrão e cache no Drive
+    assert "1990" not in src and "1960" not in src and "1991" not in src

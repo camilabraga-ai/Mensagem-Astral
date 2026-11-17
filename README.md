@@ -15,7 +15,8 @@ base de conhecimento (RAG) + LLM, com avaliação de fine-tuning LoRA como etapa
 - [x] Etapa 2 – Motor astrológico
 - [x] Etapa 3 – Base de conhecimento (224 documentos: signos, planetas, casas, aspectos, pontos e combinações)
 - [x] Etapa 4 – RAG (recuperação estruturada por metadados, geração com Claude Haiku 5.5, checagem de fidelidade; ver docs/rag.md)
-- [ ] Etapa 5 – Fine-tuning (LoRA)
+- [~] Etapa 5 – Trânsitos e mensagem diária (implementada e testada com LLM simulado; falta validar com a API real; ver docs/transitos.md e docs/etapa5_progresso.md)
+- [ ] Fine-tuning (LoRA) – adiado
 - [ ] Etapa 6 – Avaliação e documentação
 
 ## Como rodar (Colab)
