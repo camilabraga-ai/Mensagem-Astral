@@ -22,3 +22,27 @@ Documentos recuperados por ponto: combinação (`planeta_signo` / `elemento_sign
 **Privacidade:** o prompt contém signos, graus e casas, e os textos da base. Data, hora e cidade de nascimento não são enviadas.
 
 **Consumo e teste com vários mapas:** `AnthropicLLM` registra os tokens de cada chamada (`last_usage`, `total_usage`) e `generate_message` devolve `usage`. A seção 8 do notebook 04 gera mensagens para uma lista de mapas guardada só no Drive (`outputs/mapas_teste.json`), com flag própria desligada por padrão.
+
+## Resultados do primeiro teste real (2026-11-16)
+
+Modelo `claude-haiku-5-5`, effort `low`, 4 chamadas ao todo: 1 mapa (primeiro teste, com `max_tokens=2000`) e depois 3 mapas na seção 8 do notebook 04. Os dados de nascimento e as mensagens geradas **não** são registrados aqui.
+
+| Item | Resultado |
+|---|---|
+| Fidelidade aos dados calculados | Todas as mensagens citaram só Sol, Lua, Ascendente, casas e aspectos calculados, conferidos manualmente |
+| Mapa sem aspecto entre os três pontos | Nenhum aspecto inventado |
+| Aspecto novo (quadratura) | Usado corretamente |
+| Avisos de `check_faithfulness` | 1 falso positivo ("simples oposição", sentido comum), corrigido; depois, nenhum aviso |
+| Tamanho das mensagens | 330 a 400 palavras (pedido: 250 a 350) |
+| Tokens por mensagem | ~5.200 de entrada e ~1.900 de saída (texto visível ~700; o resto é raciocínio interno) |
+| Custo | ~US$ 0,0015 por mensagem (3 mensagens: US$ 0,0044) |
+
+**Ajuste feito:** a saída chegou a 1.970 tokens com `max_tokens=2000`, perto do corte. O padrão passou para 4000.
+
+## Limitações conhecidas
+- Considera só Sol, Lua e Ascendente (outros planetas, Meio do Céu, nodos e Quíron existem na base, mas não são usados na mensagem).
+- Gera uma mensagem por mapa; não responde perguntas nem mantém conversa.
+- `check_faithfulness` é um alerta por palavras, não uma verificação semântica: uma invenção sem citar o nome de um planeta ou signo não é detectada.
+- A mensagem às vezes reaproveita expressões dos textos da base (ex.: "diferença significativa", no Ascendente em Aquário).
+- A busca de endereços usa um serviço gratuito (Nominatim): um erro de digitação na cidade pode resolver para outro lugar sem aviso.
+- Avaliação feita com 4 mapas e leitura manual; não há métrica automática de qualidade.

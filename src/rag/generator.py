@@ -23,7 +23,7 @@ class LLM(Protocol):
 class AnthropicLLM:
     """Chama a API da Anthropic. Credenciais vêm do ambiente (ANTHROPIC_API_KEY). CADA CHAMADA É PAGA."""
 
-    def __init__(self, model: str = DEFAULT_MODEL, max_tokens: int = 2000, effort: str = "low", client=None):
+    def __init__(self, model: str = DEFAULT_MODEL, max_tokens: int = 4000, effort: str = "low", client=None):
         if client is None:
             import anthropic
             client = anthropic.Anthropic()

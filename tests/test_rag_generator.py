@@ -161,3 +161,11 @@ def test_consumo_ausente_nao_quebra():
     llm = AnthropicLLM(client=client)
     assert llm.complete("s", "u") == "Olá." and llm.last_usage is None
     assert generate_message(kb, fake_chart(), FakeLLM()).usage is None
+
+
+def test_max_tokens_padrao_tem_folga_para_o_raciocinio_do_modelo():
+    client, cap = fake_client()
+    AnthropicLLM(client=client).complete("s", "u")
+    assert cap["max_tokens"] == 4000          # saídas reais ficaram perto de 2000 (texto + raciocínio)
+    AnthropicLLM(client=client, max_tokens=1234).complete("s", "u")
+    assert cap["max_tokens"] == 1234          # continua configurável
