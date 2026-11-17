@@ -125,7 +125,8 @@ def test_notebook_mantem_chamada_paga_desligada_por_padrao():
     assert "CONFIRMO_CHAMADA_PAGA = False" in src
     assert "CONFIRMO_CHAMADA_PAGA_TESTES = False" in src        # seção de vários mapas também desligada
     assert "CONFIRMO_CHAMADA_PAGA = True" not in src and "CONFIRMO_CHAMADA_PAGA_TESTES = True" not in src
-    assert "mapas_teste.json" in src and "birth" not in src.split("TESTES_FILE")[0][-0:]   # dados só no Drive
+    assert "mapas_teste.json" in src                      # dados dos mapas ficam só no Drive
+    assert "1990" not in src and "1960" not in src        # nenhuma data de nascimento no notebook versionado
 
 
 def test_oposicao_no_sentido_comum_nao_gera_aviso():
