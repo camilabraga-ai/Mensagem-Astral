@@ -24,7 +24,7 @@ class FakeLLM:
     """LLM simulado: nenhuma rede, nenhum custo."""
     model = "fake-model"
 
-    def __init__(self, text="Hoje o dia convida a uma pausa. Leitura simbólica, sem comprovação científica."):
+    def __init__(self, text="Hoje o dia convida a uma pausa curta entre uma tarefa e outra."):
         self.text, self.calls, self.last_usage = text, [], {"input_tokens": 10, "output_tokens": 5}
 
     def complete(self, system, user):
@@ -75,10 +75,23 @@ def test_prompt_nao_envia_dados_de_nascimento(natal):
     assert "Greenwich" not in user and "2000" not in user and "12:00" not in user
 
 
-def test_prompt_pede_mensagem_curta_sem_determinismo_e_com_acao_pratica():
-    assert "120 a 180 palavras" in DAILY_SYSTEM_PROMPT
-    assert "sem determinismo" in DAILY_SYSTEM_PROMPT and "sugestão prática" in DAILY_SYSTEM_PROMPT
-    assert "não repita ideias, aberturas" in DAILY_SYSTEM_PROMPT
+def test_prompt_define_estilo_editorial_curto_e_pessoal():
+    p = DAILY_SYSTEM_PROMPT
+    assert "no máximo 2 parágrafos curtos" in p and "entre 70 e 100 palavras" in p
+    assert "pessoal, acolhedor, contemporâneo e levemente poético" in p
+    assert "Nada de previsões" in p and "reflexão ou uma sugestão prática" in p
+    assert "sem jargão técnico" in p and "não precisa explicar todos eles" in p
+    assert "frases genéricas" in p and "não repita ideias, aberturas" in p
+
+
+def test_prompt_nao_pede_aviso_de_leitura_simbolica_e_o_proibe():
+    p = DAILY_SYSTEM_PROMPT
+    assert "NÃO inclua avisos" in p and "apresentada separadamente" in p
+    assert "Feche com" not in p and "120 a 180" not in p        # instruções antigas removidas
+
+
+def test_versao_do_prompt_mudou_para_invalidar_mensagens_em_cache():
+    assert prompt_mod.PROMPT_VERSION != "daily-1"
 
 
 # ---------------- pipeline e fidelidade ----------------

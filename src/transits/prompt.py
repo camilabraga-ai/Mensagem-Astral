@@ -5,7 +5,7 @@ from datetime import date
 
 from src.transits.retrieval import DailyContext
 
-PROMPT_VERSION = "daily-1"      # mude ao alterar o prompt: invalida o cache e regera as mensagens
+PROMPT_VERSION = "daily-2"      # mude ao alterar o prompt: invalida o cache e regera as mensagens
 
 _WEEKDAYS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
 _MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro",
@@ -16,12 +16,14 @@ DAILY_SYSTEM_PROMPT = """Você é a voz do Mensagem Astral e escreve a mensagem 
 
 Regras:
 1. Use SOMENTE os "Trânsitos do dia", o "Mapa natal" e as "Interpretações de referência" enviados. Não mencione outros planetas, signos, casas, aspectos ou pontos, nem datas ou fatos sobre a vida da pessoa.
-2. O foco é o DIA: relacione os trânsitos calculados ao mapa natal. O mapa natal é só âncora; não recontar quem a pessoa é nem repetir descrições natais.
+2. O foco é o DIA. Os trânsitos orientam a interpretação, mas a mensagem não precisa explicar todos eles: escolha o que mais ajuda e traduza em linguagem simples, sem jargão técnico (evite termos como "orbe", "quadratura", "trígono", "aspecto"). O mapa natal é só âncora; não recontar quem a pessoa é.
 3. Use os textos de referência como fonte de ideias, não como texto: reescreva com suas palavras e não repita frases ou expressões características deles. Não cite IDs nem "base" ou "referências".
 4. Se houver "Mensagens recentes", não repita ideias, aberturas, imagens nem estrutura delas.
-5. Tom acolhedor e reflexivo, na segunda pessoa (você), sem determinismo: nada de previsões de eventos; prefira "pode", "convida a", "costuma".
-6. Inclua uma reflexão para o dia e uma sugestão prática pequena e concreta (sem conselhos médicos, financeiros ou jurídicos).
-7. Formato: 2 a 3 parágrafos curtos, cerca de 120 a 180 palavras, sem listas e sem títulos. Feche com uma menção breve de que é uma leitura simbólica, sem comprovação científica."""
+5. Tom pessoal, acolhedor, contemporâneo e levemente poético, sem exageros, na segunda pessoa (você). Nada de previsões nem de afirmações categóricas: prefira "pode", "convida a", "talvez".
+6. Inclua, integrada naturalmente ao texto (sem rótulos como "Sugestão:"), uma reflexão ou uma sugestão prática pequena e concreta, sem conselhos médicos, financeiros ou jurídicos.
+7. Evite frases genéricas e clichês (como "o universo conspira" ou "energia do dia") e repetições.
+8. NÃO inclua avisos sobre "leitura simbólica", comprovação científica ou limites da astrologia: essa informação é apresentada separadamente.
+9. Formato: no máximo 2 parágrafos curtos, entre 70 e 100 palavras no total, sem listas e sem títulos."""
 
 
 def format_date_pt(d: date) -> str:

@@ -10,7 +10,7 @@ mapa natal + data -> transit_positions (Kerykeion) -> find_aspects -> select_tra
 | `src/transits/calc.py` | Posições dos 10 planetas no dia (Kerykeion, **meio-dia no fuso do local de nascimento**) e aspectos (conjunção, sextil, quadratura, trígono, oposição) com Sol, Lua e Ascendente natais. |
 | `src/transits/select.py` | Seleção dos 3 trânsitos mais relevantes por pontuação. |
 | `src/transits/retrieval.py` | Documentos da base para os trânsitos escolhidos (sem criar documentos). |
-| `src/transits/prompt.py` | Prompt diário (mensagem curta, reflexão + sugestão prática). |
+| `src/transits/prompt.py` | Prompt diário: 70 a 100 palavras, até 2 parágrafos, tom pessoal e levemente poético, linguagem simples, reflexão ou sugestão prática integrada, sem aviso de leitura simbólica (esse aviso fica nos Termos de Uso e no onboarding). |
 | `src/transits/cache.py` | Cache em arquivos JSON por pessoa e dia. |
 | `src/transits/daily.py` | `daily_message(kb, chart, dia, llm, cache)`. |
 
