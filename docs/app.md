@@ -16,11 +16,25 @@ ANTHROPIC_API_KEY = "sk-ant-..."
 ```
 
 ## Fluxo
-1. **Tela inicial:** apresenta o produto e o aviso sobre a natureza simbólica da astrologia (o aviso fica aqui e nos Termos de Uso, nunca no corpo da mensagem).
-2. **Formulário:** nome (opcional), data, horário, cidade e país. Validação em português.
-3. **Confirmação do local:** a cidade é buscada (Nominatim/OpenStreetMap); se houver mais de um resultado, a pessoa escolhe. O fuso vem das coordenadas.
+1. **Tela inicial = formulário** (como no mockup): nome (opcional), data, horário e cidade; o país (padrão Brasil) fica em "Nasceu fora do Brasil?". Validação em português. O aviso sobre a natureza simbólica da astrologia fica em "Sobre a astrologia no Mensagem Astral" (e nos Termos de Uso), nunca no corpo da mensagem.
+2. **Local:** a cidade é buscada (Nominatim/OpenStreetMap). No caso comum (um resultado e horário sem ambiguidade) segue direto para a mensagem; se houver mais de um resultado ou dúvida de horário, aparece a tela "Confirme o local".
 4. **Horário de verão:** o motor natal lança erro para horários que não existiram ou que se repetiram na mudança de horário de verão. A interface detecta esses casos: horário inexistente bloqueia com uma explicação; horário ambíguo pede a escolha entre "horário de verão" e "horário padrão" (resolvida com um fuso fixo, sem alterar o motor).
 5. **Mensagem de hoje:** pipeline da Etapa 5 (trânsitos, RAG, Haiku, fidelidade).
+
+## Identidade visual (mockup aprovado)
+Estrutura separada entre decoração e função:
+```
+app/streamlit_app.py       telas e estado (campos e botões são componentes nativos do Streamlit)
+app/ui/theme.css           tema: preto + dourado, tipografia, campos, botões, moldura (CSS personalizado)
+app/ui/ornaments.py        ilustrações em SVG puro (sol, arco zodiacal, roda com a Lua, nuvens, montanhas, ícones)
+app/ui/components.py       monta o HTML dos ornamentos e da moldura (escapa todo texto dinâmico)
+app/static/fonts/          Cinzel (títulos) e Cormorant Garamond (texto), licença OFL, hospedadas localmente
+```
+- Os desenhos usam `currentColor`: a cor dourada vem do CSS (`--ma-gold`), então mudar a paleta é editar uma variável.
+- Ícones dos campos são SVGs embutidos no CSS. Nenhum recurso externo (nem fontes do Google) é carregado.
+- Layout mobile-first: cartão de até 520 px centralizado no desktop, ocupando a tela no celular.
+- **Prévia do visual sem API e sem cálculo:** `MENSAGEM_ASTRAL_PREVIEW=result streamlit run app/streamlit_app.py` mostra a tela da mensagem com um texto de exemplo (a mensagem do mockup), só para revisar o desenho.
+- Os campos de data e hora usam os componentes nativos; o rótulo ("Data de nascimento", "Horário de nascimento") aparece como placeholder via CSS e os segmentos `dd/mm/aaaa` e `HH:mm` surgem ao tocar no campo.
 
 ## Controle de custos
 - A mensagem em cache (mesma pessoa, mesmo dia, mesmo modelo e versão do prompt) aparece **sem nenhuma chamada**.
@@ -40,13 +54,14 @@ ANTHROPIC_API_KEY = "sk-ant-..."
 A interface é testada de ponta a ponta com `streamlit.testing.v1.AppTest`, com a busca de cidades e o LLM simulados (nenhuma rede, nenhuma chamada paga).
 
 ## Limitações conhecidas
-- Identidade visual provisória (tema escuro em `.streamlit/config.toml` e um pouco de CSS).
+- A reprodução do mockup é fiel na estrutura e no estilo, mas as ilustrações são desenhos vetoriais próprios (mais simples que as do mockup); dá para trocá-las por SVGs/PNGs finais de um ilustrador sem mexer na lógica.
+- Nos navegadores sem suporte a `:has()` (versões antigas), o placeholder dos campos de data e hora mostra os segmentos nativos (`dd/mm/aaaa`, `HH:mm`) em vez do rótulo.
 - O serviço gratuito de localização (Nominatim) tem limite de uso e pode falhar ou demorar; a busca é cacheada por 24 h.
 - Horário ambíguo usa um fuso fixo escolhido pela pessoa; o horário de referência dos trânsitos (meio-dia) usa esse mesmo fuso fixo.
 - Sem login: não há histórico por usuária nem proteção contra uso abusivo além do limite por sessão (que se zera ao recarregar a página).
 - O cache é local ao servidor; em hospedagens com disco efêmero ele se perde ao reiniciar.
 - A página mostra só a mensagem do dia (não há mensagens de outros dias nem perguntas e respostas).
-- A aparência em navegador real e em celular ainda não foi revisada visualmente (os testes cobrem comportamento, não estética).
+- A aparência foi conferida em capturas do Chrome (celular e desktop); falta a revisão da usuária em outros navegadores e aparelhos.
 
 ## Próximos passos para publicação (não executados)
 1. Revisar a interface num navegador (desktop e celular) e ajustar a identidade visual.

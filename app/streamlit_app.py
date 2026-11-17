@@ -1,4 +1,5 @@
-"""Mensagem Astral — interface web (Streamlit). Toda a lógica fica em src/; aqui só telas e estado."""
+"""Mensagem Astral — interface web (Streamlit). Telas e estado; lógica em src/, visual em app/ui/."""
+import os
 import sys
 from pathlib import Path
 
@@ -6,27 +7,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import streamlit as st
 
+from app.ui import components as ui
 from src.app import service
 from src.app.geo import GeoError, search_places
 from src.app.validation import MIN_DATE, check_local_time, validate_form
 from src.transits.cache import DailyCache
 
 st.set_page_config(page_title="Mensagem Astral", page_icon="✨", layout="centered")
-
-st.markdown("""
-<style>
-.stApp { background: radial-gradient(1200px 600px at 50% -10%, #2a2150 0%, #120f24 60%); }
-h1 { font-weight: 600; letter-spacing: .5px; }
-.ma-sub { color: #bdb3d6; font-size: 1.05rem; margin-top: -0.6rem; }
-.ma-foot { color: #8f86a8; font-size: .8rem; margin-top: 2rem; }
-div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; }
-@media (max-width: 640px) { h1 { font-size: 1.8rem; } }
-</style>
-""", unsafe_allow_html=True)
+st.markdown(ui.theme_style_tag(), unsafe_allow_html=True)
 
 SS = st.session_state
-SS.setdefault("page", "home")
+SS.setdefault("page", "form")
 SS.setdefault("gen_count", 0)
+PREVIEW = os.environ.get("MENSAGEM_ASTRAL_PREVIEW", "")        # só para revisar o visual: form | confirm | result
+SAMPLE = ("Hoje pode ser um bom dia para compartilhar uma ideia ou conversar sobre algo que você vem planejando.\n\n"
+          "Vale perceber se a busca por reconhecimento está influenciando suas decisões. Uma conversa sincera "
+          "pode trazer uma perspectiva diferente.")
 
 
 @st.cache_resource(show_spinner=False)
@@ -44,42 +40,39 @@ def go(page: str):
     st.rerun()
 
 
-def footer():
-    st.markdown('<div class="ma-foot">Mensagem Astral · versão de demonstração · Termos de Uso em breve</div>',
-                unsafe_allow_html=True)
+def shell(hero_html: str):
+    st.markdown(ui.corners() + hero_html, unsafe_allow_html=True)
 
 
-# ------------------------------------------------------------------ tela inicial
-def page_home():
-    st.title("✨ Mensagem Astral")
-    st.markdown('<p class="ma-sub">Uma mensagem curta para o seu dia, escrita a partir do seu mapa astral '
-                'e do céu de hoje.</p>', unsafe_allow_html=True)
-    st.markdown(
-        "- Você informa **data, horário e cidade** de nascimento.\n"
-        "- Calculamos o seu mapa e os trânsitos do dia.\n"
-        "- Você recebe uma mensagem de **70 a 100 palavras**, com uma observação e uma sugestão prática.")
-    st.info("A astrologia é uma linguagem simbólica para refletir sobre o dia. Não é uma ciência nem uma "
-            "previsão. Não pedimos login e não guardamos seus dados de nascimento: só a mensagem do dia, "
-            "identificada por um código.")
-    if st.button("Começar", type="primary", use_container_width=True):
-        go("form")
-    footer()
+def about():
+    with st.expander("Sobre a astrologia no Mensagem Astral"):
+        st.write("A astrologia é uma linguagem simbólica para refletir sobre o dia. Não é uma ciência nem uma "
+                 "previsão, e as mensagens são um convite à reflexão, não uma orientação médica, financeira ou jurídica. "
+                 "Não pedimos login e não guardamos seus dados de nascimento: só a mensagem do dia, identificada por um código.")
 
 
-# ------------------------------------------------------------------ formulário
+# ------------------------------------------------------------------ formulário (tela inicial)
 def page_form():
-    st.title("Seus dados de nascimento")
+    shell(ui.hero_form())
+    st.title("Mensagem Astral")
+    st.markdown(ui.divider() + ui.subtitle("Uma mensagem do universo para você, com base no seu mapa astral."),
+                unsafe_allow_html=True)
     today = service.today_local()
-    with st.form("nascimento"):
-        nome = st.text_input("Nome (opcional)", max_chars=60)
+    with st.form("nascimento", border=False):
+        nome = st.text_input("Nome (opcional)", max_chars=60, placeholder="Seu nome (opcional)",
+                             label_visibility="collapsed")
         data = st.date_input("Data de nascimento", value=None, min_value=MIN_DATE, max_value=today,
-                             format="DD/MM/YYYY")
-        hora = st.time_input("Horário de nascimento", value=None, step=60)
-        cidade = st.text_input("Cidade de nascimento", placeholder="Ex.: São Paulo, SP")
-        pais = st.text_input("País", value="Brasil")
-        enviado = st.form_submit_button("Continuar", type="primary", use_container_width=True)
-    if st.button("Voltar"):
-        go("home")
+                             format="DD/MM/YYYY", label_visibility="collapsed")
+        hora = st.time_input("Horário de nascimento", value=None, step=60, label_visibility="collapsed")
+        cidade = st.text_input("Cidade de nascimento", placeholder="Cidade de nascimento (ex.: São Paulo, SP)",
+                               label_visibility="collapsed")
+        with st.expander("Nasceu fora do Brasil?"):
+            pais = st.text_input("País", value="Brasil", label_visibility="collapsed")
+        st.markdown(ui.moon_row() + ui.scene(), unsafe_allow_html=True)
+        enviado = st.form_submit_button("Receber minha mensagem", type="primary", use_container_width=True)
+    st.markdown(ui.privacy_note("Seus dados são usados apenas para calcular seu mapa astral e gerar sua mensagem diária."),
+                unsafe_allow_html=True)
+    about()
     if not enviado:
         return
     erros = validate_form(nome, data, hora, cidade, pais, today)
@@ -95,11 +88,26 @@ def page_form():
         return
     SS.form = {"nome": (nome or "").strip(), "data": data, "hora": hora}
     SS.places = places
-    go("confirm")
+    if len(places) == 1 and check_local_time(data, hora, places[0].tz).status == "ok":
+        build_and_show(places[0], None)             # caso comum: segue direto para a mensagem
+    else:
+        go("confirm")
+
+
+def build_and_show(place, offset):
+    f = SS.form
+    try:
+        with st.spinner("Calculando o seu mapa..."):
+            SS.chart = service.build_chart(place, f["data"], f["hora"], offset)
+    except Exception:
+        st.error("Não foi possível calcular o mapa com esses dados. Confira o horário e o local.")
+        return
+    go("result")
 
 
 # ------------------------------------------------------------------ confirmação (local e horário)
 def page_confirm():
+    shell(ui.hero_form())
     st.title("Confirme o local")
     f, places = SS.form, SS.places
     if len(places) > 1:
@@ -119,40 +127,43 @@ def page_confirm():
                   f"Horário padrão (UTC{check.offsets_hours[1]:+g})": check.offsets_hours[1]}
         offset = opcoes[st.radio("Qual vale?", list(opcoes))]
     col1, col2 = st.columns(2)
-    if col1.button("Voltar", key="back_confirm"):
+    if col1.button("Voltar", key="back_confirm", use_container_width=True):
         go("form")
-    if col2.button("Ver minha mensagem de hoje", type="primary", disabled=check.status == "nonexistent"):
-        try:
-            with st.spinner("Calculando o seu mapa..."):
-                SS.chart = service.build_chart(place, f["data"], f["hora"], offset)
-        except Exception:
-            st.error("Não foi possível calcular o mapa com esses dados. Confira o horário e o local.")
-            return
-        go("result")
+    if col2.button("Ver minha mensagem de hoje", type="primary", disabled=check.status == "nonexistent",
+                   use_container_width=True):
+        build_and_show(place, offset)
+    st.markdown(ui.scene(), unsafe_allow_html=True)
 
 
 # ------------------------------------------------------------------ mensagem do dia
-def show_message(msg):
-    with st.container(border=True):
-        for par in msg.text.split("\n\n"):
-            st.markdown(par)
+def result_layout(day, nome, text, placeholder=""):
+    shell(ui.hero_result())
+    st.markdown(ui.date_line(f"{day.day} de {MESES[day.month - 1]} de {day.year}".upper()),
+                unsafe_allow_html=True)
+    st.title("Sua mensagem de hoje")
+    if nome:
+        st.markdown(ui.greeting(nome), unsafe_allow_html=True)
+    st.markdown(ui.message_frame(text, placeholder), unsafe_allow_html=True)
+
+
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
+         "novembro", "dezembro"]
 
 
 def page_result():
     chart, f = SS.chart, SS.form
     day = service.today_local()
-    st.title(f"Olá, {f['nome']}" if f["nome"] else "Sua mensagem de hoje")
-    st.caption(day.strftime("%d/%m/%Y"))
     kb, cache = get_kb(), DailyCache(service.cache_dir())
     msg = service.cached_message(kb, chart, day, cache)
+    slot = st.container()                           # a moldura é desenhada depois do botão, no mesmo lugar
     if msg is None:
         key = service.get_api_key(st.secrets)
         if not key:
-            st.info("A geração de mensagens está desativada neste ambiente (chave de acesso não configurada).")
+            note = "A geração de mensagens está desativada neste ambiente (chave de acesso não configurada)."
         elif SS.gen_count >= service.MAX_GENERATIONS_PER_SESSION:
-            st.warning("Você atingiu o limite de mensagens desta sessão. Volte mais tarde.")
+            note = "Você atingiu o limite de mensagens desta sessão. Volte mais tarde."
         else:
-            st.write("Sua mensagem de hoje ainda não foi gerada.")
+            note = "Sua mensagem de hoje ainda não foi gerada."
             if st.button("Gerar mensagem de hoje", type="primary", use_container_width=True):
                 try:
                     with st.spinner("Escrevendo a sua mensagem..."):
@@ -160,19 +171,34 @@ def page_result():
                     SS.gen_count += 1
                 except Exception as e:
                     st.error(service.friendly_error(e))
+        if msg is None:
+            with slot:
+                result_layout(day, f["nome"], None, note)
     if msg is not None:
-        show_message(msg)
+        with slot:
+            result_layout(day, f["nome"], msg.text)
+    st.markdown(ui.scene(), unsafe_allow_html=True)
     r = chart["resumo"]
     with st.expander("Seu mapa"):
         st.write(f"**Sol:** {r['signo_solar']} · **Lua:** {r['signo_lunar']} · **Ascendente:** {r['ascendente']}")
-    if st.button("Começar de novo"):
+    if st.button("Começar de novo", use_container_width=True):
         for k in ("form", "places", "chart"):
             SS.pop(k, None)
-        go("home")
-    footer()
+        go("form")
+    st.markdown(ui.footer_note("Mensagem Astral · versão de demonstração"), unsafe_allow_html=True)
 
 
-PAGES = {"home": page_home, "form": page_form, "confirm": page_confirm, "result": page_result}
-if SS.page in ("confirm", "result") and ("form" not in SS or ("chart" not in SS and SS.page == "result")):
-    SS.page = "home"
-PAGES[SS.page]()
+def page_preview_result():
+    """Só para revisar o visual (MENSAGEM_ASTRAL_PREVIEW=result): mensagem de exemplo, sem API e sem cálculo."""
+    result_layout(service.today_local(), "", SAMPLE)
+    st.markdown(ui.scene(), unsafe_allow_html=True)
+    st.markdown(ui.footer_note("Pré-visualização do visual · mensagem de exemplo"), unsafe_allow_html=True)
+
+
+PAGES = {"form": page_form, "confirm": page_confirm, "result": page_result}
+if PREVIEW == "result":
+    page_preview_result()
+else:
+    if SS.page in ("confirm", "result") and ("form" not in SS or ("chart" not in SS and SS.page == "result")):
+        SS.page = "form"
+    PAGES[SS.page]()

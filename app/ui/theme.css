@@ -1,0 +1,168 @@
+/* Mensagem Astral — tema visual (mockup aprovado). Cores e tipografia em variáveis. */
+@font-face { font-family: 'Cinzel'; font-weight: 500; src: url('app/static/fonts/Cinzel-500.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Cinzel'; font-weight: 600; src: url('app/static/fonts/Cinzel-600.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; src: url('app/static/fonts/CormorantGaramond-400.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('app/static/fonts/CormorantGaramond-500.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; font-style: italic; src: url('app/static/fonts/CormorantGaramond-400-italic.ttf') format('truetype'); font-display: swap; }
+
+:root {
+  --ma-gold: #d9b05b;
+  --ma-gold-soft: #b8944a;
+  --ma-gold-pale: #f0dcae;
+  --ma-ink: #05050a;
+  --ma-card: rgba(8, 8, 17, .82);
+  --ma-text: #efe6d0;
+  --ma-muted: #b9a981;
+  --ma-serif-title: 'Cinzel', 'Trajan Pro', 'Times New Roman', serif;
+  --ma-serif-body: 'Cormorant Garamond', 'Garamond', Georgia, serif;
+}
+
+/* ---------- fundo: preto com textura celestial discreta ---------- */
+html, body, .stApp { background-color: var(--ma-ink) !important; }
+.stApp {
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(240,220,174,.55), transparent 60%),
+    radial-gradient(1px 1px at 78% 9%, rgba(240,220,174,.45), transparent 60%),
+    radial-gradient(1.2px 1.2px at 44% 36%, rgba(240,220,174,.4), transparent 60%),
+    radial-gradient(1px 1px at 90% 52%, rgba(240,220,174,.5), transparent 60%),
+    radial-gradient(1px 1px at 22% 71%, rgba(240,220,174,.4), transparent 60%),
+    radial-gradient(1.2px 1.2px at 63% 84%, rgba(240,220,174,.5), transparent 60%),
+    radial-gradient(900px 500px at 50% -5%, rgba(40,34,78,.55), transparent 70%),
+    radial-gradient(700px 500px at 50% 105%, rgba(30,24,52,.5), transparent 70%);
+  background-size: 260px 260px, 340px 340px, 210px 210px, 300px 300px, 240px 240px, 280px 280px, 100% 100%, 100% 100%;
+}
+header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"], footer { display: none !important; }
+
+/* ---------- cartão principal (moldura dourada dupla) ---------- */
+.block-container {
+  position: relative;
+  max-width: 520px !important;
+  margin: 1.1rem auto;
+  padding: 2.2rem 1.5rem 2rem !important;
+  background: var(--ma-card);
+  border: 1px solid var(--ma-gold);
+  border-radius: 30px;
+  box-shadow: 0 0 0 1px rgba(217,176,91,.12), 0 0 38px rgba(217,176,91,.08), inset 0 0 60px rgba(0,0,0,.6);
+  color: var(--ma-text);
+  font-family: var(--ma-serif-body);
+  overflow: hidden;
+}
+.block-container::before {           /* moldura interna pontilhada */
+  content: ""; position: absolute; inset: 9px; border: 1px dotted rgba(217,176,91,.38);
+  border-radius: 23px; pointer-events: none;
+}
+@media (max-width: 560px) {
+  .block-container { margin: 0; border-radius: 0; border-left: none; border-right: none; min-height: 100vh; padding: 1.6rem 1.15rem 1.6rem !important; }
+  .block-container::before { inset: 7px; border-radius: 16px; }
+}
+
+/* ---------- ornamentos ---------- */
+.ma-gold { color: var(--ma-gold); }
+.ma-orn { display: block; width: 100%; height: auto; color: var(--ma-gold); }
+.ma-hero { margin: -.6rem 0 -.4rem; }
+.ma-scene { margin: .2rem 0 .6rem; }
+.ma-divider { width: 78%; margin: .3rem auto; }
+.ma-corner { position: absolute; width: 26px; height: 26px; color: var(--ma-gold); z-index: 3; }
+.ma-corner.tl { top: 3px; left: 3px; } .ma-corner.tr { top: 3px; right: 3px; }
+.ma-corner.bl { bottom: 3px; left: 3px; } .ma-corner.br { bottom: 3px; right: 3px; }
+.ma-lock { width: 20px; height: 20px; flex: 0 0 20px; }
+
+/* ---------- tipografia ---------- */
+.ma-title, .block-container h1 {
+  font-family: var(--ma-serif-title) !important; font-weight: 500 !important;
+  text-transform: uppercase; letter-spacing: .07em; text-align: center; color: var(--ma-gold) !important;
+  font-size: clamp(1.25rem, 6.2vw, 2.2rem) !important; line-height: 1.15 !important; padding: .3rem 0 !important; margin: 0 !important;
+  background: linear-gradient(180deg, #f6e4b4, #d3a650 60%, #b98b3c); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.ma-sub { font-family: var(--ma-serif-body); font-style: italic; text-align: center; color: var(--ma-pale, #e6d7b3);
+  font-size: clamp(1.05rem, 4.4vw, 1.3rem); line-height: 1.35; margin: .2rem 0 1.1rem; }
+.ma-date { display: flex; align-items: center; gap: .8rem; justify-content: center; margin: .2rem 0 .1rem;
+  font-family: var(--ma-serif-title); letter-spacing: .12em; text-transform: uppercase; color: var(--ma-gold); font-size: clamp(.78rem, 3.3vw, .95rem); }
+.ma-date::before, .ma-date::after { content: ""; height: 1px; flex: 1 1 18px; max-width: 70px; background: linear-gradient(90deg, transparent, var(--ma-gold)); }
+.ma-date::after { background: linear-gradient(270deg, transparent, var(--ma-gold)); }
+.ma-greeting { text-align: center; font-style: italic; color: var(--ma-muted); font-size: 1.1rem; margin: .1rem 0 .6rem; }
+
+/* ---------- campos do formulário (componentes nativos estilizados) ---------- */
+[data-testid="stForm"] { border: none !important; padding: 0 !important; background: transparent !important; }
+[data-testid="stWidgetLabel"] { display: none !important; }
+[data-testid="stTextInputRootElement"], [data-testid="stDateInputField"], [data-testid="stTimeInputTimeDisplay"] {
+  position: relative; background: rgba(7,7,14,.72) !important; border: 1px solid var(--ma-gold) !important;
+  border-radius: 15px !important; min-height: 54px; box-shadow: none !important; transition: box-shadow .15s ease, border-color .15s ease;
+}
+[data-testid="stTextInputRootElement"]:focus-within, [data-testid="stDateInputField"]:focus-within, [data-testid="stTimeInputTimeDisplay"]:focus-within {
+  box-shadow: 0 0 0 2px rgba(217,176,91,.35) !important; border-color: var(--ma-gold-pale) !important; }
+input[data-testid="stTextInputField"] {
+  font-family: var(--ma-serif-body) !important; font-size: 1.2rem !important; color: var(--ma-text) !important;
+  padding-left: 56px !important; background: transparent !important; min-height: 52px;
+}
+input[data-testid="stTextInputField"]::placeholder { color: var(--ma-muted) !important; opacity: 1; }
+[data-testid="stDateInputFieldsScroller"], [data-testid="stTimeInputTimeDisplay"] > div { padding-left: 56px !important; }
+[data-testid="stDateInputField"] span, [data-testid="stTimeInputTimeDisplay"] span {
+  font-family: var(--ma-serif-body) !important; font-size: 1.2rem !important; color: var(--ma-text) !important; }
+[data-testid="stDateInputField"] [data-placeholder="true"], [data-testid="stTimeInputTimeDisplay"] [data-placeholder="true"] { color: var(--ma-muted) !important; }
+/* ícone à esquerda de cada campo */
+[data-testid="stTextInputRootElement"]::before, [data-testid="stDateInputField"]::before, [data-testid="stTimeInputTimeDisplay"]::before {
+  content: ""; position: absolute; left: 18px; top: 50%; width: 24px; height: 24px; transform: translateY(-50%);
+  background-repeat: no-repeat; background-size: contain; pointer-events: none; z-index: 2; }
+[data-testid="stTextInputRootElement"]:has(input[aria-label^="Nome"])::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9b05b' stroke-width='1.4' stroke-linecap='round'><circle cx='12' cy='8' r='4'/><path d='M4 21c1-4.5 4-6.5 8-6.5s7 2 8 6.5'/></svg>"); }
+[data-testid="stDateInputField"]::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9b05b' stroke-width='1.4' stroke-linecap='round'><rect x='3.5' y='5' width='17' height='15' rx='2'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg>"); }
+[data-testid="stTimeInputTimeDisplay"]::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9b05b' stroke-width='1.4' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3.5 2'/></svg>"); }
+[data-testid="stTextInputRootElement"]:has(input[aria-label^="Cidade"])::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9b05b' stroke-width='1.4' stroke-linecap='round'><path d='M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z'/><circle cx='12' cy='9.5' r='2.4'/></svg>"); }
+[data-testid="stTextInputRootElement"]:has(input[aria-label^="País"])::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9b05b' stroke-width='1.4' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18'/></svg>"); }
+/* rótulo-placeholder dos campos de data e hora (os segmentos nativos dd/mm/aaaa e HH:mm aparecem ao focar ou digitar) */
+[data-testid="stDateInputField"]::after, [data-testid="stTimeInputTimeDisplay"]::after {
+  position: absolute; left: 56px; top: 50%; transform: translateY(-50%); color: var(--ma-muted); font-size: 1.2rem;
+  font-family: var(--ma-serif-body); pointer-events: none; display: none; }
+[data-testid="stDateInputField"]::after { content: "Data de nascimento"; }
+[data-testid="stTimeInputTimeDisplay"]::after { content: "Horário de nascimento"; }
+[data-testid="stDateInputField"]:not(:focus-within):not(:has([role="spinbutton"]:not([data-placeholder="true"])))::after,
+[data-testid="stTimeInputTimeDisplay"]:not(:focus-within):not(:has([role="spinbutton"]:not([data-placeholder="true"])))::after { display: block; }
+[data-testid="stDateInputField"]:not(:focus-within):not(:has([role="spinbutton"]:not([data-placeholder="true"]))) [data-testid="stDateInputFieldsScroller"],
+[data-testid="stTimeInputTimeDisplay"]:not(:focus-within):not(:has([role="spinbutton"]:not([data-placeholder="true"]))) > div { opacity: 0; }
+[data-testid="stDateInput"] svg { fill: var(--ma-gold) !important; color: var(--ma-gold) !important; }
+[data-testid="stTextInput"], [data-testid="stDateInput"], [data-testid="stTimeInput"] { margin-bottom: .15rem; }
+
+/* ---------- botões ---------- */
+.stButton > button, [data-testid="stFormSubmitButton"] > button {
+  font-family: var(--ma-serif-title) !important; letter-spacing: .08em; text-transform: uppercase; border-radius: 999px !important;
+  min-height: 54px; transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+button[kind="primary"], button[kind="primaryFormSubmit"] {
+  background: linear-gradient(180deg, #f1d28f 0%, #d1a24d 48%, #b8883a 100%) !important; color: #1a1204 !important; border: 1px solid #f3dfae !important;
+  font-weight: 600 !important; box-shadow: 0 0 0 1px rgba(0,0,0,.6) inset, 0 6px 22px rgba(217,176,91,.28);
+}
+button[kind="primary"]:hover, button[kind="primaryFormSubmit"]:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 8px 26px rgba(217,176,91,.4); }
+button[kind="primary"]:active, button[kind="primaryFormSubmit"]:active { transform: translateY(0); }
+button[kind="primary"] p, button[kind="primaryFormSubmit"] p { color: #1a1204 !important; font-size: 1rem; }
+button[kind="secondary"], button[kind="secondaryFormSubmit"] { background: transparent !important; color: var(--ma-gold) !important; border: 1px solid rgba(217,176,91,.55) !important; font-weight: 500; }
+button[kind="secondary"] p { color: var(--ma-gold) !important; font-size: .9rem; }
+button:disabled { opacity: .45 !important; }
+
+/* ---------- mensagem em moldura ornamental ---------- */
+.ma-frame { position: relative; margin: .9rem 0 .4rem; padding: 2.2rem 1.5rem 2rem; text-align: center;
+  background: rgba(10,10,20,.55); border: 1px solid rgba(217,176,91,.75); border-radius: 6px; }
+.ma-frame::before { content: ""; position: absolute; inset: 6px; border: 1px solid rgba(217,176,91,.28); border-radius: 3px; pointer-events: none; }
+.ma-frame p { font-family: var(--ma-serif-body); font-size: clamp(1.25rem, 5.4vw, 1.55rem); line-height: 1.5; color: var(--ma-text); margin: 0 0 .9rem; font-weight: 500; }
+.ma-frame p:last-of-type { margin-bottom: 0; }
+.ma-frame .ma-fc { position: absolute; width: 34px; height: 34px; color: var(--ma-gold); }
+.ma-frame .ma-fc-0 { top: -4px; left: -4px; } .ma-frame .ma-fc-90 { top: -4px; right: -4px; }
+.ma-frame .ma-fc-180 { bottom: -4px; right: -4px; } .ma-frame .ma-fc-270 { bottom: -4px; left: -4px; }
+.ma-frame .ma-tstar, .ma-frame .ma-bstar { position: absolute; left: 50%; width: 22px; transform: translateX(-50%); background: #0a0a14; padding: 0 6px; }
+.ma-frame .ma-tstar { top: -11px; } .ma-frame .ma-bstar { bottom: -11px; }
+.ma-empty { font-style: italic; color: var(--ma-muted) !important; }
+
+/* ---------- nota de privacidade, avisos, expanders, rádios ---------- */
+.ma-privacy { display: flex; align-items: center; gap: .6rem; justify-content: center; text-align: left; color: var(--ma-muted);
+  font-size: 1rem; line-height: 1.25; margin: .7rem .4rem .2rem; }
+.ma-foot { text-align: center; color: #8c8062; font-size: .85rem; margin-top: 1rem; font-style: italic; }
+[data-testid="stAlert"] { background: rgba(217,176,91,.07) !important; border: 1px solid rgba(217,176,91,.35) !important; border-radius: 12px !important; color: var(--ma-text) !important; }
+[data-testid="stAlert"] p { font-family: var(--ma-serif-body); font-size: 1.1rem; }
+[data-testid="stExpander"] { border: 1px solid rgba(217,176,91,.35) !important; border-radius: 14px !important; background: transparent !important; }
+[data-testid="stExpander"] summary p { font-family: var(--ma-serif-body); color: var(--ma-gold) !important; font-size: 1.1rem; }
+[data-testid="stRadio"] label p, .stMarkdown p, .stCaption { font-family: var(--ma-serif-body); font-size: 1.15rem; }
+[data-testid="stRadio"] [role="radiogroup"] label { color: var(--ma-text); }
+.stSpinner p { font-family: var(--ma-serif-body); font-style: italic; color: var(--ma-gold); }
+a { color: var(--ma-gold) !important; }
+
+[data-testid="stHeading"] a, [data-testid="stHeaderActionElements"] { display: none !important; }
+[data-testid="stHeading"] { text-align: center; }

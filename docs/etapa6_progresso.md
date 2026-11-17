@@ -10,6 +10,11 @@ Status: **implementada e testada localmente; aguardando revisão e confirmação
 - `.streamlit/config.toml` (tema provisório), `requirements-app.txt`, `docs/app.md`.
 - Testes: `tests/test_app_validation.py`, `tests/test_app_service.py`, `tests/test_app_ui.py` (AppTest, sem rede e sem API).
 
+## Interface visual (mockup aprovado)
+- `app/ui/` (theme.css, ornaments.py, components.py) e `app/static/fonts/` (Cinzel e Cormorant Garamond, OFL).
+- Tela inicial = formulário; caso comum segue direto para a mensagem; modo de prévia (`MENSAGEM_ASTRAL_PREVIEW=result`).
+- Testes visuais em `tests/test_app_visual.py`; capturas de tela conferidas no Chrome (mobile 430 px e desktop 1280 px).
+
 ## Preservado
 Motor astrológico, RAG, trânsitos, prompt editorial aprovado (`daily-3`) e os 224 textos: nenhum foi alterado.
 
@@ -17,6 +22,6 @@ Motor astrológico, RAG, trânsitos, prompt editorial aprovado (`daily-3`) e os 
 Nenhuma foi feita nesta etapa. Todos os testes usam LLM simulado. Haiku 5.5 é o modelo padrão.
 
 ## Pendente
-- Usuária rodar a interface localmente e avaliar visual e fluxo.
+- Usuária avaliar o visual (desktop e celular) e pedir ajustes nas ilustrações/tipografia.
 - Teste pago real, somente com autorização.
 - Confirmação para marcar a Etapa 6 como concluída; decisões de publicação (ver `docs/app.md`).

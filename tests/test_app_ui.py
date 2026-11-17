@@ -54,15 +54,17 @@ def preencher_e_enviar(at, nome="Ana", data=date(1990, 6, 15), hora=time(10, 30)
     at.time_input[0].set_value(hora)
     at.text_input[1].set_value(cidade)
     at.text_input[2].set_value(pais)
-    botao(at, "Continuar").click()
+    botao(at, "Receber minha mensagem").click()
     return at.run()
 
 
 def ate_resultado(at, **kw):
-    botao(at, "Começar").click(); at.run()
+    """Preenche e envia. No caso comum vai direto à mensagem; se houver dúvida (cidades/horário), confirma."""
     preencher_e_enviar(at, **kw)
-    botao(at, "Ver minha mensagem de hoje").click()
-    return at.run()
+    if [b for b in at.button if b.label == "Ver minha mensagem de hoje"]:
+        botao(at, "Ver minha mensagem de hoje").click()
+        at.run()
+    return at
 
 
 def textos(at):
@@ -71,24 +73,32 @@ def textos(at):
 
 
 # ------------------------------------------------------------------ telas
-def test_tela_inicial_apresenta_o_produto(ambiente):
+def test_tela_inicial_e_o_formulario_do_mockup(ambiente):
     at = novo()
     assert not at.exception
-    assert any("Mensagem Astral" in t.value for t in at.title)
-    assert "70 a 100 palavras" in textos(at) and "Não pedimos login" in textos(at)
-    assert botao(at, "Começar")
+    assert [x.value for x in at.title] == ["Mensagem Astral"]
+    assert "Uma mensagem do universo para você" in textos(at)
+    assert "Seus dados são usados apenas para calcular seu mapa astral" in textos(at)
+    assert botao(at, "Receber minha mensagem")
 
 
 def test_formulario_tem_os_campos_esperados(ambiente):
-    at = novo(); botao(at, "Começar").click(); at.run()
+    at = novo()
     assert [t.label for t in at.text_input] == ["Nome (opcional)", "Cidade de nascimento", "País"]
     assert at.date_input[0].label == "Data de nascimento" and at.time_input[0].label == "Horário de nascimento"
     assert at.text_input[2].value == "Brasil"
+    assert at.text_input[0].placeholder == "Seu nome (opcional)"
+
+
+def test_aviso_sobre_astrologia_fica_na_tela_inicial_e_nao_na_mensagem(ambiente):
+    at = novo()
+    assert any(e.label.startswith("Sobre a astrologia") for e in at.expander)
+    assert "Não é uma ciência nem uma previsão" in textos(at)
 
 
 def test_formulario_vazio_mostra_erros_claros(ambiente):
-    at = novo(); botao(at, "Começar").click(); at.run()
-    botao(at, "Continuar").click(); at.run()
+    at = novo()
+    botao(at, "Receber minha mensagem").click(); at.run()
     msg = textos(at)
     assert "data de nascimento" in msg and "horário de nascimento" in msg and "cidade de nascimento" in msg
     assert not at.exception
@@ -98,21 +108,21 @@ def test_cidade_nao_encontrada_mostra_erro_e_nao_avanca(ambiente, monkeypatch):
     def nao_acha(c, p, **kw):
         raise GeoError("Não encontramos 'Xyz' em Brasil. Confira a grafia.")
     monkeypatch.setattr(geo, "search_places", nao_acha)
-    at = novo(); botao(at, "Começar").click(); at.run()
+    at = novo()
     preencher_e_enviar(at, cidade="Xyz")
     assert "Não encontramos" in textos(at) and not at.exception
     assert not [b for b in at.button if b.label == "Ver minha mensagem de hoje"]
 
 
 def test_horario_inexistente_bloqueia_o_avanco(ambiente):
-    at = novo(); botao(at, "Começar").click(); at.run()
+    at = novo()
     preencher_e_enviar(at, data=date(2018, 11, 4), hora=time(0, 30))
     assert "não existiu" in textos(at)
     assert botao(at, "Ver minha mensagem de hoje").disabled
 
 
 def test_horario_ambiguo_pede_escolha_e_usa_a_opcao(ambiente):
-    at = novo(); botao(at, "Começar").click(); at.run()
+    at = novo()
     preencher_e_enviar(at, data=date(2019, 2, 16), hora=time(23, 30))
     assert "duas vezes" in textos(at)
     assert [r.label for r in at.radio][-1] == "Qual vale?"
@@ -124,7 +134,7 @@ def test_horario_ambiguo_pede_escolha_e_usa_a_opcao(ambiente):
 def test_varias_cidades_pedem_confirmacao(ambiente, monkeypatch):
     outra = Place("São Paulo, Filipinas", 14.0, 121.0, "Asia/Manila")
     monkeypatch.setattr(geo, "search_places", lambda c, p, **kw: [SP, outra])
-    at = novo(); botao(at, "Começar").click(); at.run()
+    at = novo()
     preencher_e_enviar(at)
     assert at.radio[0].label.startswith("Encontramos mais de um lugar")
     at.radio[0].set_value(1); at.run()          # escolhe a segunda
@@ -158,7 +168,7 @@ def test_mensagem_em_cache_aparece_sem_nova_chamada(ambiente):
 
 def test_nome_aparece_na_saudacao_e_nao_vai_para_o_llm(ambiente):
     at = ate_resultado(novo(), nome="Marina")
-    assert any(t.value == "Olá, Marina" for t in at.title)
+    assert any("Olá, Marina" in m.value for m in at.markdown) and [x.value for x in at.title] == ["Sua mensagem de hoje"]
     botao(at, "Gerar mensagem de hoje").click(); at.run()
     sistema, usuario = ambiente.calls[0]
     assert "Marina" not in sistema and "Marina" not in usuario and "1990" not in usuario
@@ -198,7 +208,7 @@ def test_acesso_direto_ao_resultado_sem_dados_volta_ao_inicio(ambiente):
     at = AppTest.from_file(APP, default_timeout=60)
     at.session_state["page"] = "result"
     at.run()
-    assert not at.exception and botao(at, "Começar")
+    assert not at.exception and botao(at, "Receber minha mensagem")
 
 
 def test_chave_da_api_nunca_aparece_na_tela(ambiente):
@@ -206,3 +216,27 @@ def test_chave_da_api_nunca_aparece_na_tela(ambiente):
     botao(at, "Gerar mensagem de hoje").click(); at.run()
     tudo = textos(at) + " ".join(str(w.value) for w in at.text_input)
     assert "sk-teste-falsa" not in tudo
+
+
+def test_caso_comum_vai_direto_para_a_mensagem_sem_tela_de_confirmacao(ambiente):
+    at = novo()
+    preencher_e_enviar(at)
+    assert at.session_state["page"] == "result" and not [b for b in at.button if b.label == "Ver minha mensagem de hoje"]
+
+
+def test_mensagem_e_escapada_antes_de_virar_html(ambiente, monkeypatch):
+    perigosa = "Olá <script>alert(1)</script> e <img src=x onerror=alert(2)>"
+    ambiente.text = perigosa
+    at = ate_resultado(novo())
+    botao(at, "Gerar mensagem de hoje").click(); at.run()
+    html = " ".join(m.value for m in at.markdown)
+    assert "<script>" not in html and "&lt;script&gt;" in html and "<img" not in html
+
+
+def test_modo_previa_mostra_o_visual_sem_api_nem_calculo(monkeypatch, tmp_path):
+    monkeypatch.setenv("MENSAGEM_ASTRAL_PREVIEW", "result")
+    monkeypatch.setenv("MENSAGEM_ASTRAL_CACHE_DIR", str(tmp_path))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    at = AppTest.from_file(APP, default_timeout=60); at.run()
+    assert not at.exception and [x.value for x in at.title] == ["Sua mensagem de hoje"]
+    assert "Pré-visualização" in textos(at) and not at.button
