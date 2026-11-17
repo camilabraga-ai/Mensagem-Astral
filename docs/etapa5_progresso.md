@@ -44,4 +44,4 @@ Chamadas pagas: nenhuma feita nesta etapa até agora; todas desligadas por padr�
 - Textos de trânsito e de casas em trânsito na base.
 - Distinção entre aspecto aplicando e separando.
 - Desligar o raciocínio interno do modelo para reduzir custo (exige teste de qualidade).
-- Fine-tuning (adiado) e Etapa 6 (avaliação e documentação final).
+- Fine-tuning (adiado).

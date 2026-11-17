@@ -6,7 +6,7 @@ MVP em Streamlit que reaproveita toda a arquitetura Python existente. Sem login,
 ```bash
 cd Mensagem-Astral
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-app.txt
+pip install -r app/requirements.txt
 export ANTHROPIC_API_KEY="sk-ant-..."        # opcional: sem a chave, a geração fica desativada
 streamlit run app/streamlit_app.py
 ```
@@ -73,10 +73,5 @@ A interface é testada de ponta a ponta com `streamlit.testing.v1.AppTest`, com 
 - A página mostra só a mensagem do dia (não há mensagens de outros dias nem perguntas e respostas).
 - A aparência foi conferida em capturas do Chrome (celular e desktop); falta a revisão da usuária em outros navegadores e aparelhos.
 
-## Próximos passos para publicação (ver docs/etapa7_progresso.md)
-1. Revisar a interface num navegador (desktop e celular) e ajustar a identidade visual.
-2. Escolher a hospedagem (por exemplo Streamlit Community Cloud) e cadastrar `ANTHROPIC_API_KEY` nos Secrets dela, com **limite de gasto** configurado no console da Anthropic.
-3. Trocar a busca de cidades por um serviço com garantia de uso em produção (ou manter o Nominatim com cache e respeitando a política de uso).
-4. Cache persistente (ou aceitar o custo de regerar após reinícios) e limite de uso por IP/dispositivo.
-5. Redigir os Termos de Uso e a política de privacidade (LGPD): o aviso sobre a natureza simbólica da astrologia e o tratamento de dados de nascimento.
-6. Decidir o repositório (hoje privado) e o domínio.
+## Situação da publicação
+O app foi publicado (Etapa 7) em https://mensagem-astral.streamlit.app/. Procedimento, manutenção e pendências: `docs/publicacao.md` e `docs/etapa7_progresso.md`. Decisões técnicas: `docs/decisoes-tecnicas.md`.
